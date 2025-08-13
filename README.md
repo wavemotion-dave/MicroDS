@@ -20,4 +20,6 @@ Features :
 
 Comming soon!
 
+You will need the MICROBASIC ROM which is either MC10.BIN or MC10.ROM (same file, just different naming conventions) and it 
+must be placed in the same directory as the emulator or else /roms/bios
 
