@@ -77,9 +77,9 @@ MicroDS includes global options (applied to the emulator as a whole and all game
 
 Key Mapping Options :
 -----------------------
-Each game can individually configure any of the 12 DS buttons (D-PAD, ABXY, L/R, START/SELECT) to a single CoCo/Dragon joystick or keyboard button. The default is for the D-PAD 
-and Button A to replicate the joystick but you can configure as you like. Pressing the X button on this screen will toggle between some preset defaults for common joystick 
-maps - such as using the D-PAD as the keyboard cursor keys (up, down, left, right arrows).
+Each game can individually configure any of the 12 DS buttons (D-PAD, ABXY, L/R, START/SELECT) to a single keyboard button. The default is for the D-PAD 
+and Button A to replicate the Cursors (AWSX) but you can configure as you like. Pressing the X button on this screen will toggle between some preset defaults for common key
+maps - such as WASD.
 
 Keyboards :
 -----------------------
