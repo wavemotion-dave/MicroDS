@@ -662,7 +662,7 @@ void SetDefaultGlobalConfig(void)
     memset(&myGlobalConfig, 0x00, sizeof(myGlobalConfig));
     myGlobalConfig.showFPS        = 0;    // Don't show FPS counter by default
     myGlobalConfig.debugger       = 0;    // Debugger is not shown by default
-    myGlobalConfig.defMachine     = 1;    // Set to Tandy by default (0=Dragon)
+    myGlobalConfig.defMachine     = 0;    // Set to standard MC-10 by default
     myGlobalConfig.defDiskSave    = 1;    // Default is to auto-save disk files
 }
 
