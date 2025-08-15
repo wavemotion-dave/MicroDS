@@ -19,8 +19,6 @@ Features :
 * Virtual keyboard stylized to the MC-10 with the ability to map any keyboard key to DS buttons.
 * Full speed, full sound and full frame-rate even on older hardware.
 
-![image](./png/kbd.png)
-
 Copyright :  
 -----------------------
 MicroDS is Copyright (c) 2025 Dave Bernazzani (wavemotion-dave)
