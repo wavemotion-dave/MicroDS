@@ -213,6 +213,7 @@ ITCM_CODE void cpu_run(void)
         {
             if (cpu.cpu_state == CPU_HALTED)
             {
+                debug[2]++;
                 // If we are halted, we still clock the timers...
                 for (int i=0; i<CPU_CYCLES_PER_LINE; i++)
                 {
@@ -259,6 +260,7 @@ ITCM_CODE void cpu_run(void)
              */
             if ( !(cc.i) && (Memory[0x08] & TCSR_TOF) && (Memory[0x08] & TCSR_ETOI) )
             {
+                debug[0]++;
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
 
@@ -283,6 +285,7 @@ ITCM_CODE void cpu_run(void)
 
             if ( !(cc.i) && (Memory[0x08] & TCSR_OCF) && (Memory[0x08] & TCSR_EOCI) )
             {
+                debug[1]++;
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
 

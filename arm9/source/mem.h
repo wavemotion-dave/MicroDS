@@ -86,11 +86,15 @@ inline __attribute__((always_inline)) void mem_write(int address, int data)
     {
          if (address >= io_start && address <= 0xbfff)
          {
+             extern s16 beeper_vol;
              Memory[0xbfff] = (uint8_t) data;
              if (data & 0x80) 
              {
-                 extern s16 beeper_vol;
-                 beeper_vol = (beeper_vol ? 0x000:0xFFF);
+                 beeper_vol = 0x1AFF;
+             }
+             else
+             {
+                 beeper_vol = 0;
              }
          }
          // 20K RAM includes the built-in 4K and the 16K Expansion
