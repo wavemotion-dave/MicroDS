@@ -50,6 +50,8 @@ Loading Games :
 -----------------------
 This MC-10 emulator supports .C10 cassette files. These are the most popular format to find on the web for the MC-10 machine.
 
+![image](./png/mainmenu.png)
+
 Games/Prorams come in two main varieties: BASIC and Machine Language. Each requires a different LOAD command in MICROBASIC. 
 The emulator tries to take a 'best guess' as to what kind of program is being loaded and is generally 95% accurate... but you 
 can override this on a per-game configuration basis.
