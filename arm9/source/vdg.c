@@ -134,7 +134,7 @@ void vdg_init(void)
     // Pre-render the 2-color modes for fast look-up and 32-bit writes for speed
     // --------------------------------------------------------------------------
     memset(color_translation_32, 0x00, sizeof(color_translation_32));
-    memset(color_translation_32a, 0x00, sizeof(color_translation_32));
+    memset(color_translation_32a, 0x00, sizeof(color_translation_32a));
     for (int color = 1; color < 16; color++)
     {
         for (int i=0; i<16; i++)

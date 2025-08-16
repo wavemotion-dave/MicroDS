@@ -54,10 +54,9 @@ void micro_reset(void)
     tape_init();
     vdg_init();
 
+    // Load the MICROCOLOR BASIC into memory
     mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
     mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
-    
-    //mem_load_rom(0xc000,  MCXBASIC,  sizeof(MCXBASIC));
     
     // And off we go!!
     cpu_init();

@@ -15,7 +15,7 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	MicroDS
 export TOPDIR		:=	$(CURDIR)
-export VERSION		:=  0.7a
+export VERSION		:=  0.7b
 
 ICON 		:= -b $(CURDIR)/logo.bmp "MicroDS $(VERSION);wavemotion-dave;https://github.com/wavemotion-dave/MicroDS" 
 

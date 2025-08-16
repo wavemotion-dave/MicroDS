@@ -34,6 +34,13 @@
 #define DPAD_SLIDE_N_GLIDE          1
 #define DPAD_DIAGONALS              2
 
+#define AUTOLOAD_NONE               0
+#define AUTOLOAD_CLOAD              1
+#define AUTOLOAD_CLOADM             2
+
+#define MACHINE_20K                 0
+#define MACHINE_32K                 1
+
 extern unsigned char MC10BASIC[0x2000];
 extern unsigned char MCXBASIC[0x4000];
 
@@ -66,9 +73,9 @@ struct __attribute__((__packed__)) GlobalConfig_t
     char reserved1[MAX_FILENAME_LEN+1];
     char reserved2[MAX_FILENAME_LEN+1];
     u8  showFPS;
-    u8  global_02;
     u8  defMachine;
-    u8  defDiskSave;
+    u8  global_01;
+    u8  global_02;
     u8  global_03;
     u8  global_04;
     u8  global_05;
@@ -157,10 +164,6 @@ typedef enum
   KBD_CTRL,
   KBD_BREAK
 } kbd_t;
-
-#define AUTOLOAD_NONE   0
-#define AUTOLOAD_CLOAD  1
-#define AUTOLOAD_CLOADM 2
 
 extern struct Config_t       myConfig;
 extern struct GlobalConfig_t myGlobalConfig;

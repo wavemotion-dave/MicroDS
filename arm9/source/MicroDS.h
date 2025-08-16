@@ -57,6 +57,7 @@ extern int bg0, bg1, bg0b, bg1b;
 extern u32 last_file_size;
 extern u8 bottom_screen;
 extern u8 shift_key, ctrl_key;
+extern u8 bMCX_found;
 
 extern void BottomScreenOptions(void);
 extern void BottomScreenKeyboard(void);

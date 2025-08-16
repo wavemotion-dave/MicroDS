@@ -23,7 +23,6 @@ uint8_t  Memory[MEMORY_SIZE]; // 64K Memory Space
 
 uint32_t io_start __attribute__((section(".dtcm"))) = 0x9000;
 
-
 /*------------------------------------------------
  * mem_init()
  *

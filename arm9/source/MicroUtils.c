@@ -627,7 +627,7 @@ void SaveConfig(bool bShow)
     }
 }
 
-void MapPlayer1(void)
+void MapWASZ(void)
 {
     myConfig.keymap[0]   = KBD_W;    // NDS D-Pad mapped to W
     myConfig.keymap[1]   = KBD_Z;    // NDS D-Pad mapped to Z
@@ -663,14 +663,13 @@ void SetDefaultGlobalConfig(void)
     myGlobalConfig.showFPS        = 0;    // Don't show FPS counter by default
     myGlobalConfig.debugger       = 0;    // Debugger is not shown by default
     myGlobalConfig.defMachine     = 0;    // Set to standard MC-10 by default
-    myGlobalConfig.defDiskSave    = 1;    // Default is to auto-save disk files
 }
 
 void SetDefaultGameConfig(void)
 {
     myConfig.game_crc    = 0;    // No game in this slot yet
 
-    MapPlayer1();                // Default to Player 1 mapping
+    MapWASZ();                   // Default to normal keyboard/cursor handling
 
     myConfig.machine     = myGlobalConfig.defMachine;   // Default is Tandy MC-10
     myConfig.autoFire    = 0;                           // Default to no auto-fire on either button
@@ -768,7 +767,7 @@ const struct options_t Option_Table[2][20] =
 {
     // Game Specific Configuration
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX (32K RAM)"},      &myConfig.machine,           3},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)"},                       &myConfig.machine,           2},
         {"AUTO LOAD",      {"NO", "CLOAD [RUN]", "CLOADM [EXEC]"},                     &myConfig.autoLoad,          3},
         {"GAME SPEED",     {"100%", "110%", "120%", "130%", "90%", "80%"},             &myConfig.gameSpeed,         6},
         {"NDS D-PAD",      {"NORMAL", "SLIDE-N-GLIDE", "DIAGONALS"},                   &myConfig.dpad,              3},
@@ -776,7 +775,7 @@ const struct options_t Option_Table[2][20] =
     },
     // Global Options
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX (32K RAM)"},      &myGlobalConfig.defMachine,  3},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)"},                       &myGlobalConfig.defMachine,  2},
         {"FPS",            {"OFF", "ON", "ON FULLSPEED"},                              &myGlobalConfig.showFPS,     3},
         {"DEBUGGER",       {"OFF", "ON"},                                              &myGlobalConfig.debugger,    2},
         {NULL,             {"",      ""},                                              NULL,                        1},
@@ -936,7 +935,7 @@ void SwapKeymap(void)
     keyMapType = (keyMapType+1) % 2;
     switch (keyMapType)
     {
-        case 0: MapPlayer1();  DSPrint(12,23,0,("CURSORS")); break;
+        case 0: MapWASZ();     DSPrint(12,23,0,("CURSORS")); break;
         case 1: MapWASD();     DSPrint(12,23,0,(" WASD  ")); break;
     }
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;
