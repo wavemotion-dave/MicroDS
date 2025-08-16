@@ -82,6 +82,7 @@ uint16_t lsr16(uint16_t word);
 uint16_t lsl16(uint16_t word);
 uint8_t lsl(uint8_t byte);
 uint8_t neg(uint8_t byte);
+uint8_t ngc(uint8_t byte);
 uint8_t or(uint8_t acc, uint8_t byte);
 void    orcc(uint8_t byte);
 uint8_t rol(uint8_t byte);
@@ -249,6 +250,7 @@ ITCM_CODE void cpu_run(void)
             
             if (cpu.cpu_state == CPU_EXCEPTION)
             {
+                debug[4]++;
                 return;
             }
         }
@@ -1166,6 +1168,39 @@ ITCM_CODE void cpu_run(void)
                 case 0x3f:
                     swi();
                     break;
+                    
+                // Undocumented: CLB - Clear B
+                case 0x00:
+                    cpu.ab.ab.b = 0; // Flags not affected
+                    break;
+
+                // Undocumented: SEXA
+                case 0x02:
+                    cpu.ab.ab.a = (cc.c ? 0xFF:0x00);
+                    break;
+                
+                // Undocumented: SETA    
+                case 0x03:
+                    cpu.ab.ab.a = 0xFF;
+                    break;
+
+                // Undocumented: NGC - Negate with Carry A
+                case 0x42:
+                    cpu.ab.ab.a = ngc(cpu.ab.ab.a);
+                    break;
+                
+                // Undocumented: NGC - Negate with Carry B    
+                case 0x52:
+                    cpu.ab.ab.b = ngc(cpu.ab.ab.b);
+                    break;
+                    
+                // Undocumented: NGC - Negate with Carry
+                case 0x62:
+                case 0x72:
+                    operand8 = (uint8_t) mem_read(eff_addr);
+                    operand8 = ngc(operand8);
+                    mem_write(eff_addr, operand8);
+                    break;
 
                 default:
                     /* Exception: Illegal op-code cpu_run()
@@ -1629,6 +1664,26 @@ inline __attribute__((always_inline)) uint8_t neg(uint8_t byte)
 
     return (uint8_t) result;
 }
+
+/*------------------------------------------------
+ * ngc()
+ *
+ *  Negate byte with carry
+ *
+ */
+inline __attribute__((always_inline)) uint8_t ngc(uint8_t byte)
+{
+    uint16_t result;
+
+    result =  0 - (byte + cc.c);
+    eval_cc_c(result);
+    eval_cc_z(result);
+    eval_cc_n(result);
+    eval_cc_v(0, ~byte, result);
+
+    return (uint8_t) result;
+}
+
 
 /*------------------------------------------------
  * or()

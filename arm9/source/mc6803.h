@@ -33,8 +33,8 @@ char *op_name[256] =
 {
     "ILL",
     "NOP",
-    "ILL",
-    "ILL",
+    "SEXA",
+    "SETA",
     "LSRD",
     "LSLD",
     "TAP",
@@ -101,7 +101,7 @@ char *op_name[256] =
     
     "NEGA",
     "ILL",
-    "ILL",
+    "NGCA",
     "COMA",
     "LSRA",
     "ILL",
@@ -118,7 +118,7 @@ char *op_name[256] =
 
     "NEGB",
     "ILL",
-    "ILL",
+    "NGCB",
     "COMB",
     "LSRB",
     "ILL",
@@ -135,7 +135,7 @@ char *op_name[256] =
 
     "NEG",
     "ILL",
-    "ILL",
+    "NGC",
     "COM",
     "LSR",
     "LSL",
@@ -152,7 +152,7 @@ char *op_name[256] =
 
     "NEG",
     "ILL",
-    "ILL",
+    "NGC",
     "COM",
     "LSR",
     "ILL",
@@ -316,8 +316,8 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 {
     {0x00, ILLEGAL_OP     , 0 , 1},
     {0x01, ADDR_INHERENT  , 2 , 1}, // NOP
-    {0x02, ILLEGAL_OP     , 0 , 1},
-    {0x03, ILLEGAL_OP     , 0 , 1},
+    {0x02, ADDR_INHERENT  , 2 , 1}, // SEXA
+    {0x03, ADDR_INHERENT  , 2 , 1}, // SETA
     {0x04, ADDR_INHERENT  , 3 , 1}, // LSRD
     {0x05, ADDR_INHERENT  , 3 , 1}, // LSLD
     {0x06, ADDR_INHERENT  , 2 , 1}, // TAP
@@ -384,7 +384,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 
     {0x40, ADDR_INHERENT  , 2 , 1}, // NEGA
     {0x41, ILLEGAL_OP     , 0 , 1},
-    {0x42, ILLEGAL_OP     , 0 , 1},
+    {0x42, ADDR_INHERENT  , 2 , 1}, // NGCA
     {0x43, ADDR_INHERENT  , 2 , 1}, // COMA
     {0x44, ADDR_INHERENT  , 2 , 1}, // LSRA
     {0x45, ILLEGAL_OP     , 0 , 1},
@@ -401,7 +401,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 
     {0x50, ADDR_INHERENT  , 2 , 1}, // NEGB
     {0x51, ILLEGAL_OP     , 0 , 1},
-    {0x52, ILLEGAL_OP     , 0 , 1},
+    {0x52, ADDR_INHERENT  , 2 , 1}, // NGCB
     {0x53, ADDR_INHERENT  , 2 , 1}, // COMB
     {0x54, ADDR_INHERENT  , 2 , 1}, // LSRB
     {0x55, ILLEGAL_OP     , 0 , 1},
@@ -418,7 +418,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 
     {0x60, ADDR_INDEXED   , 6 , 2}, // NEG
     {0x61, ILLEGAL_OP     , 0 , 1},
-    {0x62, ILLEGAL_OP     , 0 , 1},
+    {0x62, ADDR_INDEXED   , 6 , 2}, // NGC
     {0x63, ADDR_INDEXED   , 6 , 2}, // COM
     {0x64, ADDR_INDEXED   , 6 , 2}, // LSR
     {0x65, ADDR_INDEXED   , 6 , 2}, // LSL
@@ -435,7 +435,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 
     {0x70, ADDR_EXTENDED  , 6 , 3}, // NEG
     {0x71, ILLEGAL_OP     , 0 , 1},
-    {0x72, ILLEGAL_OP     , 0 , 1},
+    {0x72, ADDR_EXTENDED  , 6 , 3}, // NGC
     {0x73, ADDR_EXTENDED  , 6 , 3}, // COM
     {0x74, ADDR_EXTENDED  , 6 , 3}, // LSR
     {0x75, ILLEGAL_OP     , 0 , 1},

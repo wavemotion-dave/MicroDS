@@ -531,11 +531,20 @@ ITCM_CODE void vdg_render_semi6(int vdg_mem_base)
             {
                 c = Memory[(col + row_address) & 0x4fff];
 
-                bg_color = FB_BLACK;
-                fg_color = colors[(int)(((c & 0b11000000) >> 6) + color_set)];
+                if (c & 0x80)
+                {
+                    bg_color = FB_BLACK;
+                    fg_color = colors[(int)(((c & 0b11000000) >> 6) + color_set)];
 
-                char_index = (int)(((uint8_t) c) & SEMI_GRAPH6_MASK);
-                bit_pattern = semi_graph_6[char_index][font_row];
+                    char_index = (int)(((uint8_t) c) & SEMI_GRAPH6_MASK);
+                    bit_pattern = semi_graph_6[char_index][font_row];
+                }
+                else // Due to wiring in the MC-10, if the high bit isn't set, we render the actual value as the bit pattern in text-like colors
+                {
+                    bg_color = FB_DKGRN + ((c & 0x40) >> 5);
+                    fg_color = FB_LTGRN + ((c & 0x40) >> 5);
+                    bit_pattern = (c & 0x7F);
+                }
 
                 /* Render a row of pixels in a temporary buffer
                  */
@@ -918,6 +927,6 @@ video_mode_t vdg_get_mode(void)
             // Character bit.7 selects SEMI_GRAPHICS_4;
         }
     }
-
+    
     return mode;
 }
