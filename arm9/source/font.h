@@ -12,7 +12,7 @@
 
 #include    <stdint.h>
 
-/* Dragon computer font is a 5x7 dot matrix that fits into a 8x12
+/* Dragon (and MC-10) computer font is a 5x7 dot matrix that fits into a 8x12
  * overall matrix box.
  */
 #define     FONT_HEIGHT         12

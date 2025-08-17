@@ -12,7 +12,7 @@
 
 #include    <stdint.h>
 
-/* Dragon computer 8x12 semigraphics bit patterns
+/* Dragon computer 8x12 semigraphics bit patterns - same for MC-10
  */
 
 uint8_t semi_graph_4[][12] __attribute__((section(".dtcm"))) = {

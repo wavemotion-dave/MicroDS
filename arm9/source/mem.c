@@ -15,13 +15,26 @@
 #include    "MicroDS.h"
 #include    "MicroUtils.h"
 
-/* -----------------------------------------
-   Module globals
------------------------------------------ */
-extern unsigned int debug[];
-uint8_t  Memory[MEMORY_SIZE]; // 64K Memory Space
+// ------------------------------------------------------------------------
+// RAM is general is laid out as follows:
+//
+// 0000-001F Internal MC6803 Registers (Ports, Timers, etc)
+// 0020-007F Unmapped 
+// 0080-00FF Internal MC6803 RAM (128 bytes built into the CPU)
+// 0100-3FFF Unmapped - a real MC-10 returns floating address back as data
+// 4000-41FF External RAM (Main video RAM area sits in these 512 bytes)
+// 4200-4FFF External RAM for BASIC and program use
+// 5000-8FFF Expanded RAM - the 16K RAM module maps here
+// 9000-BFFF IO Map though generally only BFFF is used (could map RAM)
+// C000-DFFF Mirror of the MICROBASIC ROM (unless 16K ROM loaded)
+// E000-FFFF MICROBASIC ROM sits here with the vectors in the last area
+// ------------------------------------------------------------------------
 
-uint32_t io_start __attribute__((section(".dtcm"))) = 0x9000;
+extern unsigned int debug[];
+uint8_t  Memory[MEMORY_SIZE]; // 64K Memory Space for the MC-10
+
+uint32_t io_start             __attribute__((section(".dtcm"))) = 0x9000; // Can be moved up closer to BFFF to allow for more RAM expansion
+uint8_t  counter_read_latch   __attribute__((section(".dtcm"))) = 0x00;   // Reading the high-byte of the Timer-Counter latches the low byte
 
 /*------------------------------------------------
  * mem_init()
@@ -42,11 +55,20 @@ void mem_init(void)
         if (addr >= 0x4000 && addr < 0x9000) Memory[addr] = 0x00;
     }
     
-    // Default machine is 20K (4K internal + 16K RAM expansion).
+    // Default machine is 20K (4K internal + 16K RAM expansion)
+    // but we allow an expanded 32K version that maps RAM up
+    // to the last 256 byte page of memory before the ROM starts.
     io_start = (myConfig.machine ? 0xbf00:0x9000);
+    
+    counter_read_latch = 0x00;
 }
 
 
+// ------------------------------------------------------------------------
+// Port 2 (memory address 0x0003) has 3 special keyboard keys mapped into 
+// it... SHIFT, CONTROL and BREAK. Depending on what value was written to
+// Memory[2], we could be scanning for one or more of these special keys.
+// ------------------------------------------------------------------------
 uint8_t read_kbd_lo(void)
 {
     uint8_t ret = 0x04; // No RS232 input
@@ -74,6 +96,21 @@ uint8_t read_kbd_lo(void)
     return ~ret;
 }
 
+// -------------------------------------------------------------------------
+// This is the keyboard port that is normally read at 0xbfff and contains
+// all pressable keys on the MC-10 except SHIFT, CONTROL and BREAK which
+// are handled by the read at port Memory[3]. The value written to Memory[2]
+// will indicate which columns are being scanned (a 0-bit represents an 
+// active column). Here is the layout of the keymap:
+//
+//   Column 0   1   2   3   4   5   6   7
+//Row-0:    @   A   B   C   D   E   F   G
+//Row-1:    H   I   J   K   L   M   N   O
+//Row-2:    P   Q   R   S   T   U   V   W
+//Row-3:    X   Y   Z              ENT SPC
+//Row-4:    0   1   2   3   4   5   6   7
+//Row-5:    8   9   :   ;   ,   -   .   /
+// -------------------------------------------------------------------------
 uint8_t read_kbd_hi(void)
 {
     uint8_t ret = 0x00;
@@ -163,8 +200,28 @@ uint8_t read_kbd_hi(void)
     return ~ret;
 }
 
+// =========================================================
+// MC6803 REGISTERS SUMMARY
+// 
+// 00 Direction register associated with I/O port 1
+// 01 Direction register associated with I/O port 2
+// 02 I/O port 1 (data)
+// 03 I/O port 2 (data)
+// 08 Timer status register
+// 09 Counter high byte
+// OA Counter low byte
+// OB Timer out high byte
+// OC Timer out low byte
+// 0D Timer in high byte
+// 0E Timer in low byte
+// 10 Serial interface format and rate control register
+// 11 Serial interface status register
+// 12 Serial receive register
+// 13 Serial transmit register
+// 14 RAM control register
+// 15-1F Reserved
+// =========================================================
 
-uint16_t counter_latch = 0x0000;
 void cpu_reg_write(int address, int data)
 {
     if (address > 0x1F) return;
@@ -177,15 +234,11 @@ void cpu_reg_write(int address, int data)
             break;
             
         case 0x09:  // Counter High Byte
-            cpu.counter = 0xfff8;
-            counter_latch = data << 8;
-            Memory[address] = data;
+            cpu.counter = 0xfff8; // Any write to the high-byte sets this as the counter
             break;
             
         case 0x0A:  // Counter Low Byte
-            cpu.counter = counter_latch | data;
-            Memory[address] = data;
-            break;
+            break;  // The counter is read-only except for the specific write to the high byte directly above
             
         case 0x0B:  // Compare High Byte
             Memory[0x08] &= ~TCSR_OCF;
@@ -202,8 +255,7 @@ void cpu_reg_write(int address, int data)
         default:
             Memory[address] = data;
             break;
-    }
-    
+    }    
 }
 
 uint8_t cpu_reg_read(int address)
@@ -215,17 +267,14 @@ uint8_t cpu_reg_read(int address)
             return read_kbd_lo() & tape_read();
             break;
         
-        case 0x07:
-            return Memory[address];
-            break;
-            
-        case 0x09:
+        case 0x09:  // Counter high byte
             Memory[0x08] &= ~TCSR_TOF;
+            counter_read_latch = (cpu.counter & 0xFF);
             return (cpu.counter >> 8) & 0xFF;
             break;
             
-        case 0x0A:
-            return cpu.counter & 0xFF;
+        case 0x0A:  // Counter low byte (latched)
+            return counter_read_latch;
             break;
             
         default:

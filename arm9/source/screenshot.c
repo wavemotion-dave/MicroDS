@@ -18,8 +18,8 @@
 #include <unistd.h>
 
 #include "screenshot.h"
-#include "printf.h"
 #include "MicroUtils.h"
+#include "printf.h"
 
 void write16(void *address, u16 value) {
 

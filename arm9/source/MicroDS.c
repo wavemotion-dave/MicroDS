@@ -697,7 +697,7 @@ ITCM_CODE void MicroDS_main(void)
         emuActFrames++;
 
         // ---------------------------------------------
-        // We support Tandy at 60Hz NTSC only
+        // We support Tandy MC-10 at 60Hz NTSC only
         // ---------------------------------------------
         if (++timingFrames == 60)
         {
@@ -1043,7 +1043,7 @@ void BottomScreenKeyboard(void)
 {
     swiWaitForVBlank();
 
-    //  Init bottom screen for Dragon/Tandy Keyboard
+    //  Init bottom screen for Tandy MC-10 Virtual Keyboard
     if (myGlobalConfig.debugger)
     {
         decompress(debug_kbdTiles, bgGetGfxPtr(bg0b),  LZ77Vram);

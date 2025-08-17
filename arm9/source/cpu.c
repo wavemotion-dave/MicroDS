@@ -199,8 +199,6 @@ void cpu_check_reset(void)
  *  param:  Nothing
  *  return: Nothing
  */
-int trace=0;
-int zzz=0;
 ITCM_CODE void cpu_run(void)
 {
     int         eff_addr;
@@ -214,7 +212,6 @@ ITCM_CODE void cpu_run(void)
         {
             if (cpu.cpu_state == CPU_HALTED)
             {
-                debug[2]++;
                 // If we are halted, we still clock the timers...
                 for (int i=0; i<CPU_CYCLES_PER_LINE; i++)
                 {
@@ -250,7 +247,6 @@ ITCM_CODE void cpu_run(void)
             
             if (cpu.cpu_state == CPU_EXCEPTION)
             {
-                debug[4]++;
                 return;
             }
         }
@@ -262,7 +258,6 @@ ITCM_CODE void cpu_run(void)
              */
             if ( !(cc.i) && (Memory[0x08] & TCSR_TOF) && (Memory[0x08] & TCSR_ETOI) )
             {
-                debug[0]++;
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
 
@@ -287,7 +282,6 @@ ITCM_CODE void cpu_run(void)
 
             if ( !(cc.i) && (Memory[0x08] & TCSR_OCF) && (Memory[0x08] & TCSR_EOCI) )
             {
-                debug[1]++;
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
 
@@ -314,18 +308,6 @@ ITCM_CODE void cpu_run(void)
         // Fetch the OP Code directly from memory
         op_code = mem_read_pc(cpu.pc++);
         
-#if 0
-        //if (cpu.pc == 0x698B) trace=1;
-        //if (keysCurrent() & KEY_X) trace = 1;   
-        if (trace)
-        {
-            if (++zzz < 5000)
-            {
-                debug_printf("%04X %02X %04s [%02X A=%02X, B=%02X, X=%04X, SP=%04X CC=%02X]\n", cpu.pc-1, op_code, op_name[op_code], Memory[cpu.pc], cpu.ab.ab.a, cpu.ab.ab.b, cpu.x, cpu.sp, get_cc());
-            }
-        }
-#endif        
-
         // Process the Op-Code...
         {
             /* 'operand8' will be operand byte, and for a 16-bit operand 'operand8'

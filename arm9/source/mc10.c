@@ -33,13 +33,10 @@ u8  micro_special_key       __attribute__((section(".dtcm"))) = 0;
 u32 last_file_size          __attribute__((section(".dtcm"))) = 0;
 u32 micro_scanline_counter  __attribute__((section(".dtcm"))) = 0;
 
-// ----------------------------------------------------------------------
-// Reset the emulation. Freshly decompress the contents of RAM memory
-// and setup the CPU registers exactly as the snapshot indicates. Then
-// we can start the emulation at exactly the point it left off... This
-// works fine so long as the game does not need to go back out to the
-// tape to load another segment of the game.
-// ----------------------------------------------------------------------
+// ------------------------------------------------------------------------
+// Reset the emulation. Load the MICROBASIC into the memory map and reset
+// the various peripherals for tape and VDG... and start emulation running!
+// ------------------------------------------------------------------------
 void micro_reset(void)
 {
     micro_special_key = 0;
@@ -65,11 +62,11 @@ void micro_reset(void)
 }
 
 
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 // Run the emulation for exactly 1 scanline of Audio and CPU. When we reach
 // the VSYNC, we also draw the entire frame. This is not perfect emulation
-// as the frame should be drawn scanline-by-scanline... but good enough for now.
-// -----------------------------------------------------------------------------
+// as the frame should be drawn scanline-by-scanline... but good enough.
+// -------------------------------------------------------------------------
 ITCM_CODE u32 micro_run(void)
 {
     // --------------------------------------

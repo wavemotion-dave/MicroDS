@@ -12,14 +12,14 @@
 #ifndef __MEM_H__
 #define __MEM_H__
 
-#include    <stdint.h>
-#include "cpu.h"
+#include  <stdint.h>
+#include  "cpu.h"
 
-#define     MEMORY_SIZE    65536       // 64K Byte for the full M6803 memory map (RAM + Registers + MICROBASIC)
+#define MEMORY_SIZE    65536       // 64K Byte for the full M6803 memory map (RAM + Registers + MICROBASIC)
 
 extern uint8_t  Memory[MEMORY_SIZE];    // 64K RAM 
 extern unsigned int debug[];
-
+extern uint8_t counter_read_latch;
 
 // These are for Register at Memory[8]
 #define TCSR_OLVL   0x01  // Output Level

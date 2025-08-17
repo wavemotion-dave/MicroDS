@@ -22,8 +22,7 @@
 #include "splash.h"
 #include "mainmenu.h"
 #include "soundbank.h"
-#include "pdev_bg0.h"
-#include "printf.h"
+#include "splash_bot.h"
 #include "tape.h"
 #include "CRC32.h"
 #include "printf.h"
@@ -965,6 +964,8 @@ void MicroDSChangeKeymap(void)
   DSPrint(1 ,21,0,("       X : SWAP KEYMAP TYPE  "));
   DSPrint(1 ,22,0,("   START : SAVE KEYMAP       "));
   DisplayKeymapName(ucY);
+  
+  bIndTch = myConfig.keymap[0];
 
   // -----------------------------------------------------------------------
   // Clear out any keys that might be pressed on the way in - make sure
@@ -1505,8 +1506,8 @@ u8 MC10Init(char *szGame)
  ********************************************************************************/
 void RunMicroComputer(void)
 {
-  micro_reset();                         // Ensure the Dragon/Tandy Emulation is ready
-  BottomScreenKeyboard();                 // Show the game-related screen with keypad / keyboard
+  micro_reset();                        // Ensure the MC-10 Emulation is ready
+  BottomScreenKeyboard();               // Show the game-related screen with keypad / keyboard
 }
 
 // ------------------------------------------------------------------------------------
@@ -1634,9 +1635,9 @@ void intro_logo(void)
   decompress(splashMap, (void*) bgGetMapPtr(bg1), LZ77Vram);
   dmaCopy((void *) splashPal,(u16*) BG_PALETTE,256*2);
       
-  decompress(pdev_bg0Tiles, bgGetGfxPtr(bg1s), LZ77Vram);
-  decompress(pdev_bg0Map, (void*) bgGetMapPtr(bg1s), LZ77Vram);
-  dmaCopy((void *) pdev_bg0Pal,(u16*) BG_PALETTE_SUB,256*2);
+  decompress(splash_botTiles, bgGetGfxPtr(bg1s), LZ77Vram);
+  decompress(splash_botMap, (void*) bgGetMapPtr(bg1s), LZ77Vram);
+  dmaCopy((void *) splash_botPal,(u16*) BG_PALETTE_SUB,256*2);
 
   FadeToColor(0,BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_DST_BG0,3,0,3);
 

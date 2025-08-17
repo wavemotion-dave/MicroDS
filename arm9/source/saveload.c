@@ -97,9 +97,10 @@ void MicroSaveState()
     if (retVal) retVal = fwrite(&emuFps,                  sizeof(emuFps),                   1, handle);
     if (retVal) retVal = fwrite(&emuActFrames,            sizeof(emuActFrames),             1, handle);
     if (retVal) retVal = fwrite(&timingFrames,            sizeof(timingFrames),             1, handle);
+    if (retVal) retVal = fwrite(&counter_read_latch,      sizeof(counter_read_latch),       1, handle);
     
     // And some spare bytes we can eat into as needed without bumping the SAVE version
-    if (retVal) retVal = fwrite(spare,                    16,                               1, handle);    
+    if (retVal) retVal = fwrite(spare,                    15,                               1, handle);    
     
     // -----------------------------------------------------------------------
     // Compress the 64K RAM data using 'high' compression ratio... it's
@@ -205,9 +206,10 @@ void MicroLoadState()
         if (retVal) retVal = fread(&emuFps,                  sizeof(emuFps),                   1, handle);
         if (retVal) retVal = fread(&emuActFrames,            sizeof(emuActFrames),             1, handle);
         if (retVal) retVal = fread(&timingFrames,            sizeof(timingFrames),             1, handle);
+        if (retVal) retVal = fread(&counter_read_latch,      sizeof(counter_read_latch),       1, handle);
         
         // And some spare bytes we can eat into as needed without bumping the SAVE version
-        if (retVal) retVal = fread(spare,                    16,                               1, handle);    
+        if (retVal) retVal = fread(spare,                    15,                               1, handle);    
 
         // Restore Main RAM memory
         int comp_len = 0;

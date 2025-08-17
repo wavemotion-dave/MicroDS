@@ -21,9 +21,8 @@ typedef enum
 {
     CPU_EXEC        = 0,    // Normal state instruction execution
     CPU_HALTED      = 1,    // Is halted
-    CPU_SYNC        = 2,    // Waiting in SYNC state (for 'sync' and 'cwai')
-    CPU_RESET       = 4,    // Held in reset
-    CPU_EXCEPTION   = 5,    // Signal an emulation exception (bad op-code)
+    CPU_RESET       = 2,    // Held in reset
+    CPU_EXCEPTION   = 3,    // Signal an emulation exception (bad op-code)
 } cpu_run_state_t;
 
 /* MC6803 CPU state
@@ -46,8 +45,8 @@ typedef struct
     uint16_t    sp;
     uint16_t    pc;
     
-    uint32_t    counter;
-    uint32_t    compare;
+    uint32_t    counter;            // 16-bit free running counter (we use 32-bits for easy rollover checks)
+    uint32_t    compare;            // 16-bit compare register programmable by the user
 
     /* State after last command execution
      */
@@ -62,10 +61,7 @@ extern int cycles_this_scanline;
  *  CPU module API
  */
 void cpu_init(void);
-void cpu_halt(int state);
 void cpu_reset(int state);
-void cpu_firq(int state);
-void cpu_irq(int state);
 void cpu_check_reset(void);
 void cpu_run(void);
 
