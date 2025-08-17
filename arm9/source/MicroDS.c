@@ -64,7 +64,6 @@ char last_file[MAX_FILENAME_LEN]    = "";
 // --------------------------------------------------
 // A few housekeeping vars to help with emulation...
 // --------------------------------------------------
-u8 bFirstTime        = 1;
 u8 bottom_screen     = 0;
 
 // ---------------------------------------------------------------------------
@@ -98,8 +97,8 @@ u16 vusCptVBL = 0;             // We use this as a basic timer for the Mario spr
 u8 touch_debounce = 0;         // A bit of touch-screen debounce
 u8 key_debounce = 0;           // A bit of key debounce to ensure the key is held pressed for a minimum amount of time
 
-// The DS/DSi has 12 keys that can be mapped
-u16 NDS_keyMap[12] __attribute__((section(".dtcm"))) = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_A, KEY_B, KEY_X, KEY_Y, KEY_R, KEY_L, KEY_START, KEY_SELECT};
+// The DS/DSi has 12 keys that can be mapped... we only allow mapping the first 10 (START and SELECT have special meaning for the MC-10 emulation)
+u16 NDS_keyMap[12] __attribute__((section(".dtcm"))) = {KEY_UP, KEY_LEFT, KEY_DOWN, KEY_RIGHT, KEY_A, KEY_B, KEY_X, KEY_Y, KEY_R, KEY_L, KEY_START, KEY_SELECT};
 
 static char tmp[64];    // For various sprintf() calls
 
@@ -125,10 +124,7 @@ void SoundUnPause(void)
 // of FluBBa, we've swiched over to the maxmod sound core which performs much better.
 // --------------------------------------------------------------------------------------------
 #define SAMPLE_RATE_NTSC    15580       // To roughly match how many samples (262 scanlines x 60 frames = 15720). We purposely undershoot to keep buffer full.
-#define SAMPLE_RATE_PAL     15400       // To roughly match how many samples (312 scanlines x 50 frames = 15600). We purposely undershoot to keep buffer full.
-u16     sample_rate = SAMPLE_RATE_NTSC;
-
-#define buffer_size         (512+16)            // Enough buffer that we don't have to fill it too often. Must be multiple of 16.
+#define buffer_size         (512+16)    // Enough buffer that we don't have to fill it too often. Must be multiple of 16.
 
 mm_ds_system sys   __attribute__((section(".dtcm")));
 mm_stream myStream __attribute__((section(".dtcm")));
@@ -139,7 +135,6 @@ u16 mixer_write     __attribute__((section(".dtcm"))) = 0;
 s16 mixer[WAVE_DIRECT_BUF_SIZE+1];
 
 // The games normally run at the proper 100% speed, but user can override from 80% to 130%
-u16 GAME_SPEED_PAL[]  __attribute__((section(".dtcm"))) = {655, 596, 547, 504, 728, 818 };
 u16 GAME_SPEED_NTSC[] __attribute__((section(".dtcm"))) = {546, 497, 455, 416, 420, 607 };
 
 u16 catch_up        __attribute__((section(".dtcm"))) = 0;
@@ -222,12 +217,10 @@ void newStreamSampleRate(void)
         last_game_speed = myConfig.gameSpeed;
         mmStreamClose();
 
-        // For now we are only supporting the NTSC standard
-        sample_rate = SAMPLE_RATE_NTSC;
-
         // Adjust the sample rate to match the core emulation speed... user can override from 80% to 130%
-        int new_sample_rate = (sample_rate * sample_rate_adjust[myConfig.gameSpeed]) / 100;
-        myStream.sampling_rate  = new_sample_rate;        // sample_rate to match the scanline emulation
+        int sample_rate = (SAMPLE_RATE_NTSC * sample_rate_adjust[myConfig.gameSpeed]) / 100;
+        
+        myStream.sampling_rate  = sample_rate;            // sample_rate to match the scanline emulation
         myStream.buffer_length  = buffer_size;            // buffer length = (512+16)
         myStream.callback       = OurSoundMixer;          // set callback function
         myStream.format         = MM_STREAM_16BIT_STEREO; // format = stereo 16-bit
@@ -250,12 +243,11 @@ void setupStream(void)
     mmLoadEffect(SFX_CLICKNOQUIT);
     mmLoadEffect(SFX_KEYCLICK);
     mmLoadEffect(SFX_MUS_INTRO);
-    mmLoadEffect(SFX_FLOPPY);
 
     //----------------------------------------------------------------
     //  open stream
     //----------------------------------------------------------------
-    myStream.sampling_rate  = sample_rate;            // sample_rate for the Dragon/Tandy emulation
+    myStream.sampling_rate  = SAMPLE_RATE_NTSC;       // sample_rate for the MC-10 emulation
     myStream.buffer_length  = buffer_size;            // buffer length = (512+16)
     myStream.callback       = OurSoundMixer;          // set callback function
     myStream.format         = MM_STREAM_16BIT_STEREO; // format = stereo 16-bit
@@ -320,7 +312,6 @@ void ResetMicroComputer(void)
     timingFrames  = 0;
     emuFps=0;
 
-    bFirstTime = 1;
     bottom_screen = 0;
 }
 
@@ -664,8 +655,6 @@ ITCM_CODE void MicroDS_main(void)
   // Force the sound engine to turn on when we start emulation
   bStartSoundEngine = 10;
 
-  bFirstTime = 1;
-
   // -----------------------------------------------------------
   // Stay in this loop running the game until the user exits...
   // -----------------------------------------------------------
@@ -739,38 +728,46 @@ ITCM_CODE void MicroDS_main(void)
 
         uint16_t keys_current = keysCurrent();
 
-        // ------------------------------------------------------------------------------------
-        // The first time we press KEY_START, we might be loading up the Cassette or Cartridge
-        // ------------------------------------------------------------------------------------
-        if (bFirstTime && myConfig.autoLoad)
+        // --------------------------------------------------------------------------
+        // The KEY_START NDS key will auto-load the current .C10 cassette program.
+        // The KEY_SELECT NDS key will issue the 'RUN' command (useful after CLOAD).
+        // --------------------------------------------------------------------------
+        if (myConfig.autoLoad && (BufferedKeysReadIdx == BufferedKeysWriteIdx))
         {
-            if (micro_mode == MODE_CAS)
+            // START key is special...
+            if (keys_current & KEY_START)
             {
-                // START key is also special...
-                if (keys_current & KEY_START)
+                BufferKey(KBD_C);    // C
+                BufferKey(KBD_L);    // L
+                BufferKey(KBD_O);    // O
+                BufferKey(KBD_A);    // A
+                BufferKey(KBD_D);    // D
+                if (myConfig.autoLoad == AUTOLOAD_CLOADM)
                 {
-                    bFirstTime = 0;
+                    BufferKey(KBD_M);    // M
+                    BufferKey(KBD_COLON);// :
+
+                    BufferKey(KBD_E);    // E
+                    BufferKey(KBD_X);    // X
+                    BufferKey(KBD_E);    // E
                     BufferKey(KBD_C);    // C
-                    BufferKey(KBD_L);    // L
-                    BufferKey(KBD_O);    // O
-                    BufferKey(KBD_A);    // A
-                    BufferKey(KBD_D);    // D
-                    if (myConfig.autoLoad == AUTOLOAD_CLOADM)
-                    {
-                        BufferKey(KBD_M);    // M
-                        BufferKey(KBD_COLON);// :
-
-                        BufferKey(KBD_E);    // E
-                        BufferKey(KBD_X);    // X
-                        BufferKey(KBD_E);    // E
-                        BufferKey(KBD_C);    // C
-                    }
-
-                    BufferKey(KBD_ENTER); // ENTER
-                    BufferKey(255);       // END
                 }
+
+                BufferKey(KBD_ENTER); // ENTER
+                BufferKey(255);       // END
+            }
+            
+            // SELECT key is special...
+            if (keys_current & KEY_SELECT)
+            {
+                BufferKey(KBD_R);     // R
+                BufferKey(KBD_U);     // U
+                BufferKey(KBD_N);     // N
+                BufferKey(KBD_ENTER); // ENTER
+                BufferKey(255);       // END
             }
         }
+
 
       // --------------------------------------------------------------
       // Hold the key press for a brief instant... To allow the
@@ -929,10 +926,10 @@ ITCM_CODE void MicroDS_main(void)
                       else if (nds_key & KEY_RIGHT) nds_key |= KEY_DOWN;   // DOWN-RIGHT
                   }
 
-                  // --------------------------------------------------------------------------------------------------
-                  // There are 12 NDS buttons (D-Pad, XYAB, L/R and Start+Select) - we allow mapping of any of these.
-                  // --------------------------------------------------------------------------------------------------
-                  for (u8 i=0; i<12; i++)
+                  // ------------------------------------------------------------------------------------------------------
+                  // There are 10 NDS buttons that can be mapped (D-Pad, XYAB, L/R) - we allow mapping these to MC-10 keys.
+                  // ------------------------------------------------------------------------------------------------------
+                  for (u8 i=0; i<10; i++)
                   {
                       if (nds_key & NDS_keyMap[i])
                       {

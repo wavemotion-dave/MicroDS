@@ -40,11 +40,19 @@ Vaneev and used by permission of the generous MIT license.
 
 The MicroDS emulator is offered as-is, without any warranty.
 
+Credits :
+-----------------------
+I'd like to thank Mike Tinnes for his efforts on the MC-10 Javascript emulator (https://github.com/mtinnes/mc-10)
+which I used a sort of reference point when I couldn't find the details I needed in the official documentation.
+
+And also Eyal Abraham (eyalabraham) for his work on the dragon-emu which was a nice clean codebase to start with
+so I didn't have to re-invent the wheel for the core.
+
 BIOS/BASIC Files Needed :
 -----------------------
 
-You will need the MICROBASIC ROM which must be named either MC10.BIN or MC10.ROM (same file, just different naming conventions) and it 
-must be placed in the same directory as the emulator or else /roms/bios
+You will need the MICROBASIC ROM which must be named either MC10.BIN or MC10.ROM (CRC32 of 11fda97e -- same file, just 
+different naming conventions) and it must be placed in the same directory as the emulator or else /roms/bios
 
 Loading Games :
 -----------------------
@@ -77,9 +85,12 @@ MicroDS includes global options (applied to the emulator as a whole and all game
 
 Key Mapping Options :
 -----------------------
-Each game can individually configure any of the 12 DS buttons (D-PAD, ABXY, L/R, START/SELECT) to a single keyboard button. The default is for the D-PAD 
+Each game can individually configure any of the 10 DS buttons (D-PAD, ABXY, L/R) to a single keyboard button. The default is for the D-PAD 
 and Button A to replicate the Cursors (AWSX) but you can configure as you like. Pressing the X button on this screen will toggle between some preset defaults for common key
 maps - such as WASD.
+
+The START key is special - it will issue the CLOAD/CLOADM command to save typing.
+The SELECT key is special - it issues the RUN command to MICROBASIC to save typing.
 
 Keyboards :
 -----------------------
@@ -123,4 +134,11 @@ And then move the soundbank.h file to the arm9/sources directory
 
 Versions :
 -----------------------
-0.7: First public beta.
+0.8: 17-Aug-2024 by wavemotion-dave
+* Fix for SG6 graphics when character index is > 128
+* A subset of 'common' 6803 undocumented instructions added.
+* START issues CLOAD/CLOADM and SELECT issues the RUN command.
+* Cleanup of configuration and key map handling.
+* Removed partial MCX support until a better plan can be had.
+
+0.7: 15-Aug-2024 - First public beta.

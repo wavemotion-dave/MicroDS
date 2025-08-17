@@ -21,7 +21,7 @@
 #define MAX_FILE_SIZE               (64*1024) // 64K is big enough for any .C10 file
 
 #define MAX_CONFIGS                 1000
-#define CONFIG_VERSION              0x0002
+#define CONFIG_VERSION              0x0003
 
 #define MICRO_FILE                  0x01
 #define DIRECTORY                   0x02

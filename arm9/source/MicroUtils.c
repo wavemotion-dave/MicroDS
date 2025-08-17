@@ -627,12 +627,12 @@ void SaveConfig(bool bShow)
     }
 }
 
-void MapWASZ(void)
+void MapWAZS(void)
 {
-    myConfig.keymap[0]   = KBD_W;    // NDS D-Pad mapped to W
-    myConfig.keymap[1]   = KBD_Z;    // NDS D-Pad mapped to Z
-    myConfig.keymap[2]   = KBD_A;    // NDS D-Pad mapped to A
-    myConfig.keymap[3]   = KBD_S;    // NDS D-Pad mapped to S
+    myConfig.keymap[0]   = KBD_W;    // NDS D-Pad UP    mapped to W
+    myConfig.keymap[1]   = KBD_A;    // NDS D-Pad LEFT  mapped to A
+    myConfig.keymap[2]   = KBD_Z;    // NDS D-Pad DOWN  mapped to Z
+    myConfig.keymap[3]   = KBD_S;    // NDS D-Pad RIGHT mapped to S
     myConfig.keymap[4]   = KBD_SPACE;// NDS A Button mapped to SPACE
     myConfig.keymap[5]   = KBD_ENTER;// NDS B Button mapped to ENTER
     myConfig.keymap[6]   = KBD_SPACE;// NDS X Button mapped to SPACE
@@ -643,10 +643,10 @@ void MapWASZ(void)
 
 void MapWASD(void)
 {
-    myConfig.keymap[0]   = KBD_W;    // NDS D-Pad mapped to W
-    myConfig.keymap[1]   = KBD_S;    // NDS D-Pad mapped to Z
-    myConfig.keymap[2]   = KBD_A;    // NDS D-Pad mapped to A
-    myConfig.keymap[3]   = KBD_D;    // NDS D-Pad mapped to S
+    myConfig.keymap[0]   = KBD_W;    // NDS D-Pad UP    mapped to W
+    myConfig.keymap[1]   = KBD_A;    // NDS D-Pad LEFT  mapped to A
+    myConfig.keymap[2]   = KBD_S;    // NDS D-Pad DOWN  mapped to S
+    myConfig.keymap[3]   = KBD_D;    // NDS D-Pad RIGHT mapped to D
     myConfig.keymap[4]   = KBD_SPACE;// NDS A Button mapped to SPACE
     myConfig.keymap[5]   = KBD_ENTER;// NDS B Button mapped to ENTER
     myConfig.keymap[6]   = KBD_SPACE;// NDS X Button mapped to SPACE
@@ -669,7 +669,7 @@ void SetDefaultGameConfig(void)
 {
     myConfig.game_crc    = 0;    // No game in this slot yet
 
-    MapWASZ();                   // Default to normal keyboard/cursor handling
+    MapWAZS();                   // Default to normal keyboard/cursor handling
 
     myConfig.machine     = myGlobalConfig.defMachine;   // Default is Tandy MC-10
     myConfig.autoFire    = 0;                           // Default to no auto-fire on either button
@@ -909,9 +909,9 @@ void DisplayKeymapName(u32 uY)
 {
   sprintf(szCha," PAD UP    : %-17s",szKeyName[myConfig.keymap[0]]);
   DSPrint(1, 6,(uY== 6 ? 2 : 0),szCha);
-  sprintf(szCha," PAD DOWN  : %-17s",szKeyName[myConfig.keymap[1]]);
+  sprintf(szCha," PAD LEFT  : %-17s",szKeyName[myConfig.keymap[1]]);
   DSPrint(1, 7,(uY== 7 ? 2 : 0),szCha);
-  sprintf(szCha," PAD LEFT  : %-17s",szKeyName[myConfig.keymap[2]]);
+  sprintf(szCha," PAD DOWN  : %-17s",szKeyName[myConfig.keymap[2]]);
   DSPrint(1, 8,(uY== 8 ? 2 : 0),szCha);
   sprintf(szCha," PAD RIGHT : %-17s",szKeyName[myConfig.keymap[3]]);
   DSPrint(1, 9,(uY== 9 ? 2 : 0),szCha);
@@ -935,7 +935,7 @@ void SwapKeymap(void)
     keyMapType = (keyMapType+1) % 2;
     switch (keyMapType)
     {
-        case 0: MapWASZ();     DSPrint(12,23,0,("CURSORS")); break;
+        case 0: MapWAZS();     DSPrint(12,23,0,("CURSORS")); break;
         case 1: MapWASD();     DSPrint(12,23,0,(" WASD  ")); break;
     }
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;
