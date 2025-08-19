@@ -16,6 +16,7 @@ Features :
 * Tandy MicroColor Computer MC-10 emulation with solid MC6803 CPU core.
 * 4K Internal RAM + 16K External Expansion RAM for 20K total (+128 byte CPU RAM).
 * Optional memory expansion to 32K in machine configuration.
+* Optional emulation of the MCX-128 peripheral with MCXBASIC 2.1
 * Cassette (.c10) support for loading games and programs.
 * Save/Load Game State (one slot).
 * LCD Screen Swap (press and hold L+R+X during gameplay).
