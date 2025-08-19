@@ -120,7 +120,7 @@ If you have provided the 16K MCX.BIN external ROM (2.1 from Darren Atkinson rele
 
 ![image](./png/mcx.png)
 
-The more useful menu item here is (1) MCX BASIC which provides the extended BASIC command set with the 32K memory model.  While the (2) MCX BASIC - LARGE model will work, it runs slowly due to having to swap banks in/out of memory
+The more useful menu item here is (1) MCX BASIC which provides the extended BASIC command set with the 32K memory model.  While the (2) MCX BASIC - LARGE model (48K) will work, it runs slowly due to having to swap banks in/out of memory
 and the emulation is not designed for such activities and so the bytes must be moved in large blocks which taxes the emulation on the little DS handheld.
 
 Known Issues:
