@@ -3,6 +3,12 @@
 # MicroDS
 A Tandy MC-10 Micro Color Computer emulator for the DS/DSi/XL/LL
 
+The Tandy MC-10 computer was produced starting in 1983 and discontinued only a year later. With only 4K of RAM (plus a 16K RAM expansion available), it was designed
+to compete with entry-level machines of the era. It had the same Video Display Graphics (VDG) chip of the Tandy CoCo line and a similar (but not exact) CPU, it is 
+often looked at as the 'little brother' (sadly, sometimes the 'red-headed step-child') of the CoCo 1/2.  The machine found itself a bit too underpowered in a world 
+where more capable machines were coming down in prices quickly. It's unknown how many of these little machines were sold, but it is unlikely there are more than 
+250,000 of these floating about.
+
 ![image](./png/splash.png)
 
 Features :
@@ -21,7 +27,7 @@ Copyright :
 -----------------------
 MicroDS is Copyright (c) 2025 Dave Bernazzani (wavemotion-dave)
 
-This is a derivitive work of Dragon 32 Emu Copyright (c) 2018 Eyal Abraham (eyalabraham)
+This is a derivative work of Dragon 32 Emu Copyright (c) 2018 Eyal Abraham (eyalabraham)
 which can be found on github:
 
 https://github.com/eyalabraham/dragon32-emu
@@ -62,7 +68,7 @@ This MC-10 emulator supports .C10 cassette files. These are the most popular for
 
 ![image](./png/mainmenu.png)
 
-Games/Prorams come in two main varieties: BASIC and Machine Language. Each requires a different LOAD command in MICROBASIC. 
+Games/Programs come in two main varieties: BASIC and Machine Language. Each requires a different LOAD command in MICROBASIC. 
 The emulator tries to take a 'best guess' as to what kind of program is being loaded and is generally 95% accurate... but you 
 can override this on a per-game configuration basis.
 
@@ -118,7 +124,7 @@ and the emulation is not designed for such activities and so the bytes must be m
 
 Known Issues:
 -----------------------
-* Frames are drawn in their entierty on the VSYNC meaning that any demos that utilize split-screen techniques will not run correctly. Virtually nothing tries to actually do this to the best of my knowledge.
+* Frames are drawn in their entirety on the VSYNC meaning that any demos that utilize split-screen techniques will not run correctly. Virtually nothing tries to actually do this to the best of my knowledge.
 
 Compile Instructions :
 -----------------------
