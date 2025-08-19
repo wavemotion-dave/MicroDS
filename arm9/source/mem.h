@@ -17,9 +17,14 @@
 
 #define MEMORY_SIZE    65536       // 64K Byte for the full M6803 memory map (RAM + Registers + MICROBASIC)
 
-extern uint8_t  Memory[MEMORY_SIZE];    // 64K RAM 
 extern unsigned int debug[];
-extern uint8_t counter_read_latch;
+
+extern uint8_t  Memory[MEMORY_SIZE];      // 64K RAM for main memory
+extern uint8_t  Memory_MCX[MEMORY_SIZE];  // 64K RAM for MCX RAM page 1
+extern uint8_t  counter_read_latch;
+extern uint8_t  mcx_ram_bank0;
+extern uint8_t  mcx_ram_bank1;
+extern uint8_t  mcx_rom_bank;
 
 // These are for Register at Memory[8]
 #define TCSR_OLVL   0x01  // Output Level
@@ -43,8 +48,12 @@ void cpu_reg_write(int address, int data);
 uint8_t cpu_reg_read(int address);
 uint8_t read_kbd_lo(void);
 uint8_t read_kbd_hi(void);
+uint8_t unmapped_memory_read(int address);
+void unmapped_memory_write(int address, int data);
+void io_write(int address, int data);
 
 extern uint32_t io_start;
+extern uint8_t  cpu_timer_control;
 
 // For when we know it's a PC read and won't be registers...
 #define mem_read_pc(addr) (Memory[addr])
@@ -62,7 +71,7 @@ inline __attribute__((always_inline)) uint8_t mem_read(int address)
     if (address & 0xFF80)
     {
         if (address >= io_start && address <= 0xbfff) return read_kbd_hi();
-        else if (address > 0x100 && address < 0x4000) return (address & 0xFF); // Unmapped region returns floating bus address 
+        else if (address > 0x100 && address < 0x4000) return unmapped_memory_read(address); // Unmapped region returns floating bus address 
         return Memory[address];
     }
     else
@@ -70,6 +79,7 @@ inline __attribute__((always_inline)) uint8_t mem_read(int address)
         return cpu_reg_read(address);
     }
 }
+
 
 /*------------------------------------------------
  * mem_write()
@@ -86,16 +96,7 @@ inline __attribute__((always_inline)) void mem_write(int address, int data)
     {
          if (address >= io_start && address <= 0xbfff)
          {
-             extern s16 beeper_vol;
-             Memory[0xbfff] = (uint8_t) data;
-             if (data & 0x80) 
-             {
-                 beeper_vol = 0x1AFF;
-             }
-             else
-             {
-                 beeper_vol = 0;
-             }
+             io_write(address, data);
          }
          // 20K RAM includes the built-in 4K and the 16K Expansion
          else if (address >= 0x4000 && address < io_start)
@@ -106,6 +107,7 @@ inline __attribute__((always_inline)) void mem_write(int address, int data)
          {
             Memory[address] = (uint8_t) data;
          }
+         else unmapped_memory_write(address, data);
     }
     else cpu_reg_write(address, data);
 }

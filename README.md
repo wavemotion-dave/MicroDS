@@ -54,6 +54,8 @@ BIOS/BASIC Files Needed :
 You will need the MICROBASIC ROM which must be named either MC10.BIN or MC10.ROM (CRC32 of 11fda97e -- same file, just 
 different naming conventions) and it must be placed in the same directory as the emulator or else /roms/bios
 
+Optionally you can include MCX.BIN or MCX.ROM (CRC32 of 11202e4b) for MCX-128 emulation.
+
 Loading Games :
 -----------------------
 This MC-10 emulator supports .C10 cassette files. These are the most popular format to find on the web for the MC-10 machine.

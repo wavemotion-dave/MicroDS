@@ -251,12 +251,12 @@ ITCM_CODE void cpu_run(void)
             }
         }
 
-        if (Memory[0x08] & (TCSR_TOF | TCSR_OCF))   // Is either supported interrupt flag set?
+        if (!(cc.i) && (Memory[0x08] & (TCSR_TOF | TCSR_OCF)))   // Is either supported interrupt flag set?
         {
             /* If an interrupt is received and it is enabled, then setup stack frame and call interrupt service by
              * setting the PC to the vectors content.
              */
-            if ( !(cc.i) && (Memory[0x08] & TCSR_TOF) && (Memory[0x08] & TCSR_ETOI) )
+            if ( (Memory[0x08] & TCSR_TOF) && (Memory[0x08] & TCSR_ETOI) )
             {
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
@@ -279,8 +279,8 @@ ITCM_CODE void cpu_run(void)
                 cc.i = CC_FLAG_SET;  // No more interrupts until cleared
                 cpu.pc = (mem_read(VEC_TOF) << 8) + mem_read(VEC_TOF+1);
             }
-
-            if ( !(cc.i) && (Memory[0x08] & TCSR_OCF) && (Memory[0x08] & TCSR_EOCI) )
+            else
+            if ( (Memory[0x08] & TCSR_OCF) && (Memory[0x08] & TCSR_EOCI) )
             {
                 cpu.cpu_state = CPU_EXEC;
                 cycles_this_scanline += 12;
@@ -1436,7 +1436,7 @@ inline __attribute__((always_inline)) uint8_t com(uint8_t byte)
  *  execution and waits for an unmasked interrupt to occur.
  *
  */
-void wai(void)
+inline __attribute__((always_inline)) void wai(void)
 {
     mem_write(cpu.sp, cpu.pc & 0xff);
     cpu.sp--;
@@ -1832,7 +1832,7 @@ inline __attribute__((always_inline)) void subd(uint16_t word)
  *  Return from interrupt
  *
  */
-void rti(void)
+inline __attribute__((always_inline)) void rti(void)
 {
     /* Restore CCR
      */

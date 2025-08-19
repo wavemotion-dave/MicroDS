@@ -30,11 +30,16 @@
 // E000-FFFF MICROBASIC ROM sits here with the vectors in the last area
 // ------------------------------------------------------------------------
 
-extern unsigned int debug[];
 uint8_t  Memory[MEMORY_SIZE]; // 64K Memory Space for the MC-10
 
 uint32_t io_start             __attribute__((section(".dtcm"))) = 0x9000; // Can be moved up closer to BFFF to allow for more RAM expansion
 uint8_t  counter_read_latch   __attribute__((section(".dtcm"))) = 0x00;   // Reading the high-byte of the Timer-Counter latches the low byte
+
+uint8_t mcx_ram_bank0         __attribute__((section(".dtcm"))) = 0x00;
+uint8_t mcx_ram_bank1         __attribute__((section(".dtcm"))) = 0x00;
+uint8_t mcx_rom_bank          __attribute__((section(".dtcm"))) = 0x00;
+
+uint8_t Memory_MCX[MEMORY_SIZE] = {0};
 
 /*------------------------------------------------
  * mem_init()
@@ -49,15 +54,18 @@ void mem_init(void)
     for (int addr = 0; addr < MEMORY_SIZE; addr++ )
     {
         Memory[addr] = 0x00;
+        Memory_MCX[addr] = 0x00;
         
         if (addr < 0x100)                    Memory[addr] = 0x00;
         if (addr >= 0x100 && addr < 0x4000)  Memory[addr] = 0xFF;
         if (addr >= 0x4000 && addr < 0x9000) Memory[addr] = 0x00;
     }
     
+    // ----------------------------------------------------------
     // Default machine is 20K (4K internal + 16K RAM expansion)
     // but we allow an expanded 32K version that maps RAM up
     // to the last 256 byte page of memory before the ROM starts.
+    // ----------------------------------------------------------
     io_start = (myConfig.machine ? 0xbf00:0x9000);
     
     counter_read_latch = 0x00;
@@ -69,7 +77,7 @@ void mem_init(void)
 // it... SHIFT, CONTROL and BREAK. Depending on what value was written to
 // Memory[2], we could be scanning for one or more of these special keys.
 // ------------------------------------------------------------------------
-uint8_t read_kbd_lo(void)
+ITCM_CODE uint8_t read_kbd_lo(void)
 {
     uint8_t ret = 0x04; // No RS232 input
     
@@ -111,7 +119,7 @@ uint8_t read_kbd_lo(void)
 //Row-4:    0   1   2   3   4   5   6   7
 //Row-5:    8   9   :   ;   ,   -   .   /
 // -------------------------------------------------------------------------
-uint8_t read_kbd_hi(void)
+ITCM_CODE uint8_t read_kbd_hi(void)
 {
     uint8_t ret = 0x00;
     
@@ -200,6 +208,110 @@ uint8_t read_kbd_hi(void)
     return ~ret;
 }
 
+// --------------------------------------------------------------
+// This is called whenever a memory address has been accessed
+// that is normally unmapped. This generally returns the low
+// byte of the address so accessed - essentially a floating bus.
+// --------------------------------------------------------------
+ITCM_CODE uint8_t unmapped_memory_read(int address)
+{
+    if (myConfig.machine == MACHINE_MCX) return Memory[address];
+    return (address & 0xFF);
+}
+
+ITCM_CODE void unmapped_memory_write(int address, int data)
+{
+    if (myConfig.machine == MACHINE_MCX)
+    {
+         if (address < 0xC000) Memory[address] = data;
+    }
+}
+
+
+ITCM_CODE void io_write(int address, int data)
+{
+    if (myConfig.machine == MACHINE_MCX && (mcx_rom_bank != 2))
+    {
+        // ---------------------------------------------
+        // Is this a write to the I/O space of the MCX.
+        // There are two registers in play here:
+        // 0xBF00 - RAM banking
+        // 0xBF01 - ROM banking
+        // ---------------------------------------------
+        if ((address & 0x80) == 0)
+        {
+            Memory[address] = data; // These ports can be read back
+            
+            switch (address & 1)
+            {
+                case 0x00:  // RAM Banking
+                    if (mcx_ram_bank0 != (data & 1))
+                    {
+                        debug[0]++;
+                        mcx_ram_bank0 = (data & 1);
+                        // ----------------------------------------------------------------
+                        // I have yet to see any real-world MCX program swap bank 0 out... 
+                        // so until I have something to use, we do nothing here.
+                        // ----------------------------------------------------------------
+                    }
+                    if (mcx_ram_bank1 != ((data & 2) >> 1))
+                    {
+                        debug[1]++;
+                        mcx_ram_bank1 = ((data & 2) >> 1);
+                        
+                        // -----------------------------------------------------------
+                        // Switch-a-roo!
+                        // This is slow... but there are so few programs that take
+                        // advantage of the banked memory that we are willing to 
+                        // do this swap slowly and keep the normal Memory read/write
+                        // routines fast - it's not worth adding banking pointers
+                        // to slow down 99% of software when this works fine for
+                        // the few MCX programs that need the extra memory... So far,
+                        // only the MCX Large Memory Model (48K) utilizes this.
+                        // -----------------------------------------------------------
+                        uint32_t tmp;
+                        uint32_t *s32 = (uint32_t *)(Memory+0x4000);
+                        uint32_t *d32 = (uint32_t *)(Memory_MCX+0x4000);
+                        for (int i=0; i<(8192-64); i++) // Not the last 256 bytes... where the IO lives
+                        {
+                            tmp = *s32;
+                            *s32++ = *d32;
+                            *d32++ = tmp;
+                        }
+                    }
+                    break;
+                
+                case 0x01:  // ROM Banking
+                    if (mcx_rom_bank != (data & 3))
+                    {
+                        debug[2]++;
+                        mcx_rom_bank = (data & 3);
+                        
+                        if (mcx_rom_bank == 2)
+                        {
+                            mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
+                            mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
+                            mcx_ram_bank0 = 0;
+                            mcx_ram_bank1 = 0;
+                            cpu_reset(1);
+                            cpu_check_reset();
+                        }
+                    }
+                    break;
+            }
+            
+            return;
+        }
+    }
+    
+    // -------------------------------------------------------
+    // Otherwise this is the normal MC-10 VDG/Keyboard port...
+    // -------------------------------------------------------
+    extern s16 beeper_vol;
+    Memory[0xbfff] = (uint8_t) data;
+    beeper_vol = (data & 0x80) ? 0x1AFF : 0;
+}
+
 // =========================================================
 // MC6803 REGISTERS SUMMARY
 // 
@@ -222,9 +334,9 @@ uint8_t read_kbd_hi(void)
 // 15-1F Reserved
 // =========================================================
 
-void cpu_reg_write(int address, int data)
+ITCM_CODE void cpu_reg_write(int address, int data)
 {
-    if (address > 0x1F) return;
+    if (address > 0x1F) unmapped_memory_write(address, data);
     
     switch (address)
     {
@@ -258,9 +370,10 @@ void cpu_reg_write(int address, int data)
     }    
 }
 
-uint8_t cpu_reg_read(int address)
+ITCM_CODE uint8_t cpu_reg_read(int address)
 {
-    if (address > 0x1f) return (address & 0xff);
+    if (address > 0x1f) return unmapped_memory_read(address); // Possibly floating bus
+    
     switch (address)
     {
         case 0x03: // Keyboard Low and Cassette Input

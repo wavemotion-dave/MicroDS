@@ -90,10 +90,11 @@ u16 nds_key          __attribute__((section(".dtcm"))) = 0;       // 0 if no key
 u8 last_mapped_key   __attribute__((section(".dtcm"))) = 0;       // The last mapped key which has been pressed - used for key click feedback
 u8 kbd_keys_pressed  __attribute__((section(".dtcm"))) = 0;       // Each frame we check for keys pressed - since we can map keyboard keys to the NDS, there may be several pressed at once
 u8 kbd_keys[12]      __attribute__((section(".dtcm")));           // Up to 12 possible keys pressed at the same time (we have 12 NDS physical buttons though it's unlikely that more than 2 or maybe 3 would be pressed)
+u16 vusCptVBL        __attribute__((section(".dtcm"))) = 0;       // We use this as a basic timer for the splash screen
 
 u8 bStartSoundEngine = 0;      // Set to true to unmute sound after 1 frame of rendering...
 int bg0, bg1, bg0b, bg1b;      // Some vars for NDS background screen handling
-u16 vusCptVBL = 0;             // We use this as a basic timer for the Mario sprite... could be removed if another timer can be utilized
+
 u8 touch_debounce = 0;         // A bit of touch-screen debounce
 u8 key_debounce = 0;           // A bit of key debounce to ensure the key is held pressed for a minimum amount of time
 
@@ -332,7 +333,7 @@ void ShowDebugger(void)
 // The status line shows the status of the Emulation System
 // on the top line of the bottom DS display.
 // ------------------------------------------------------------
-void DisplayStatusLine(void)
+ITCM_CODE void DisplayStatusLine(void)
 {
     if (shift_key)
     {
@@ -616,9 +617,6 @@ u8 slide_n_glide_key_up     __attribute__((section(".dtcm"))) = 0;
 u8 slide_n_glide_key_down   __attribute__((section(".dtcm"))) = 0;
 u8 slide_n_glide_key_left   __attribute__((section(".dtcm"))) = 0;
 u8 slide_n_glide_key_right  __attribute__((section(".dtcm"))) = 0;
-
-s8 digital_offset_x         __attribute__((section(".dtcm"))) = 0;
-s8 digital_offset_y         __attribute__((section(".dtcm"))) = 0;
 
 // ------------------------------------------------------------------------
 // The main emulation loop is here... call into the Z80 and render frame
@@ -967,7 +965,7 @@ ITCM_CODE void MicroDS_main(void)
 void useVRAM(void)
 {
     vramSetBankB(VRAM_B_LCD);        // 128K VRAM used for snapshot DCAP buffer - but could be repurposed during emulation ...
-    vramSetBankD(VRAM_D_LCD);        // Not using this for video but 128K of faster RAM always useful!  Mapped at 0x06860000 -   Unused - reserved for future use
+    vramSetBankD(VRAM_D_LCD);        // Not using this for video but 128K of faster RAM always useful!  Mapped at 0x06860000 -   Used for MCX-128 RAM Emulation
     vramSetBankE(VRAM_E_LCD);        // Not using this for video but 64K of faster RAM always useful!   Mapped at 0x06880000 -   Unused - reserved for future use
     vramSetBankF(VRAM_F_LCD);        // Not using this for video but 16K of faster RAM always useful!   Mapped at 0x06890000 -   Unused - reserved for future use
     vramSetBankG(VRAM_G_LCD);        // Not using this for video but 16K of faster RAM always useful!   Mapped at 0x06894000 -   Unused - reserved for future use
@@ -1220,7 +1218,7 @@ int main(int argc, char **argv)
    
       // ---------------------------------------------------------------
       // Let the user know what BIOS files were found - the only BIOS
-      // that must exist is 48.rom or else the show is off...
+      // that must exist is MC10.ROM or else the show is off...
       // ---------------------------------------------------------------
       if (!bBIOS_found)
       {

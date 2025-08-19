@@ -29,9 +29,7 @@
 #define NTSC_SCANLINES      262
 
 u32 micro_line              __attribute__((section(".dtcm"))) = 0;
-u8  micro_special_key       __attribute__((section(".dtcm"))) = 0;
 u32 last_file_size          __attribute__((section(".dtcm"))) = 0;
-u32 micro_scanline_counter  __attribute__((section(".dtcm"))) = 0;
 
 // ------------------------------------------------------------------------
 // Reset the emulation. Load the MICROBASIC into the memory map and reset
@@ -39,8 +37,6 @@ u32 micro_scanline_counter  __attribute__((section(".dtcm"))) = 0;
 // ------------------------------------------------------------------------
 void micro_reset(void)
 {
-    micro_special_key = 0;
-    micro_scanline_counter = 0;
     micro_line = 0;
     
     // We might need to change the sample rate
@@ -51,11 +47,20 @@ void micro_reset(void)
     tape_init();
     vdg_init();
 
-    // Load the MICROCOLOR BASIC into memory
-    mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
-    mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
-    
-    // And off we go!!
+    // --------------------------------------------------
+    // Load the MICROCOLOR BASIC or MCXBASIC into memory
+    // --------------------------------------------------
+    if ((myConfig.machine == MACHINE_MCX) && bMCX_found)
+    {
+        mem_load_rom(0xc000, MCXBASIC, sizeof(MCXBASIC));   // MCX ROM takes up all 16K
+    }
+    else
+    {
+        mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
+        mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
+    }
+
+    // Reset the CPU and off we go!!
     cpu_init();
     cpu_reset(1);
     cpu_check_reset();

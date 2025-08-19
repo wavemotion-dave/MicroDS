@@ -14,10 +14,8 @@
 #include    "cpu.h"
 #include    "mem.h"
 #include    "vdg.h"
-
 #include    "font.h"
 #include    "semigraph.h"
-
 #include    "MicroUtils.h"
 
 /* -----------------------------------------
@@ -35,30 +33,29 @@ video_mode_t vdg_get_mode(void);
 /* -----------------------------------------
    Module globals
 ----------------------------------------- */
-int          video_ram_offset   __attribute__((section(".dtcm")));
-int          sam_video_mode     __attribute__((section(".dtcm")));
-video_mode_t current_mode       __attribute__((section(".dtcm")));
+video_mode_t current_vdg_mode   __attribute__((section(".dtcm")));
+int reduce_framerate_for_tape   __attribute__((section(".dtcm"))) = 0;
 
 /* The following table lists the pixel ratio of columns and rows
  * relative to a 768x384 frame buffer resolution.
  */
 int resolution[][3] __attribute__((section(".dtcm"))) = {
-    { 1, 1,  512 },  // ALPHA_INTERNAL, 2 color 32x16 512B Default
-    { 1, 1,  512 },  // ALPHA_EXTERNAL, 4 color 32x16 512B
-    { 1, 1,  512 },  // SEMI_GRAPHICS_4, 8 color 64x32 512B
-    { 1, 1,  512 },  // SEMI_GRAPHICS_6, 8 color 64x48 512B
-    { 1, 1, 2048 },  // SEMI_GRAPHICS_8, 8 color 64x64 2048B
-    { 1, 1, 3072 },  // SEMI_GRAPHICS_12, 8 color 64x96 3072B
-    { 1, 1, 6144 },  // SEMI_GRAPHICS_24, 8 color 64x192 6144B
-    { 4, 3, 1024 },  // GRAPHICS_1C, 4 color 64x64 1024B
-    { 2, 3, 1024 },  // GRAPHICS_1R, 2 color 128x64 1024B
-    { 2, 3, 2048 },  // GRAPHICS_2C, 4 color 128x64 2048B
-    { 2, 2, 1536 },  // GRAPHICS_2R, 2 color 128x96 1536B PMODE 0
-    { 2, 2, 3072 },  // GRAPHICS_3C, 4 color 128x96 3072B PMODE 1
-    { 2, 1, 3072 },  // GRAPHICS_3R, 2 color 128x192 3072B PMODE 2
-    { 2, 1, 6144 },  // GRAPHICS_6C, 4 color 128x192 6144B PMODE 3
-    { 1, 1, 6144 },  // GRAPHICS_6R, 2 color 256x192 6144B PMODE 4
-    { 1, 1, 6144 },  // DMA, 2 color 256x192 6144B
+    { 1, 1,  512 },  // ALPHA_INTERNAL,     2 color 32x16   512B Default
+    { 1, 1,  512 },  // ALPHA_EXTERNAL,     4 color 32x16   512B
+    { 1, 1,  512 },  // SEMI_GRAPHICS_4,    8 color 64x32   512B
+    { 1, 1,  512 },  // SEMI_GRAPHICS_6,    8 color 64x48   512B
+    { 1, 1, 2048 },  // SEMI_GRAPHICS_8,    8 color 64x64   2048B
+    { 1, 1, 3072 },  // SEMI_GRAPHICS_12,   8 color 64x96   3072B
+    { 1, 1, 6144 },  // SEMI_GRAPHICS_24,   8 color 64x192  6144B
+    { 4, 3, 1024 },  // GRAPHICS_1C,        4 color 64x64   1024B
+    { 2, 3, 1024 },  // GRAPHICS_1R,        2 color 128x64  1024B
+    { 2, 3, 2048 },  // GRAPHICS_2C,        4 color 128x64  2048B
+    { 2, 2, 1536 },  // GRAPHICS_2R,        2 color 128x96  1536B PMODE 0
+    { 2, 2, 3072 },  // GRAPHICS_3C,        4 color 128x96  3072B PMODE 1
+    { 2, 1, 3072 },  // GRAPHICS_3R,        2 color 128x192 3072B PMODE 2
+    { 2, 1, 6144 },  // GRAPHICS_6C,        4 color 128x192 6144B PMODE 3
+    { 1, 1, 6144 },  // GRAPHICS_6R,        2 color 256x192 6144B PMODE 4
+    { 1, 1, 6144 },  // DMA,                2 color 256x192 6144B
 };
 
 uint8_t colors[] __attribute__((section(".dtcm"))) = {
@@ -96,19 +93,11 @@ uint16_t colors16[] __attribute__((section(".dtcm"))) = {
         (FB_ORANGE<<8)  | FB_ORANGE,
 };
 
-uint32_t color_translation_32[16][16] __attribute__((section(".dtcm"))) = {0};
+uint32_t color_translation_32[16][16]  __attribute__((section(".dtcm"))) = {0};
 uint32_t color_translation_32a[16][16] __attribute__((section(".dtcm"))) = {0};
 
-uint32_t color_artifact_0[16]         __attribute__((section(".dtcm"))) = {0};
-uint32_t color_artifact_1[16]         __attribute__((section(".dtcm"))) = {0};
-uint32_t color_artifact_0r[16]        __attribute__((section(".dtcm"))) = {0};
-uint32_t color_artifact_1r[16]        __attribute__((section(".dtcm"))) = {0};
-                                      
 uint32_t color_artifact_mono_0[16]    __attribute__((section(".dtcm"))) = {0};
 uint32_t color_artifact_mono_1[16]    __attribute__((section(".dtcm"))) = {0};
-                                      
-uint32_t color_artifact_green0[16]    __attribute__((section(".dtcm"))) = {0};
-uint32_t color_artifact_green1[16]    __attribute__((section(".dtcm"))) = {0};
 
 
 /*------------------------------------------------
@@ -116,19 +105,16 @@ uint32_t color_artifact_green1[16]    __attribute__((section(".dtcm"))) = {0};
  *
  *  Initialize the VDG device
  *
- *  param:  Nothing
- *  return: Nothing
  */
 void vdg_init(void)
 {
     uint8_t buf[4];
     int buffer_index;
     
-    sam_video_mode = 0;         // Alphanumeric
-
     /* Default startup mode of the MC-10
      */
-    current_mode = ALPHA_INTERNAL;
+    current_vdg_mode = ALPHA_INTERNAL;
+    reduce_framerate_for_tape = 0;
 
     // --------------------------------------------------------------------------
     // Pre-render the 2-color modes for fast look-up and 32-bit writes for speed
@@ -187,86 +173,12 @@ void vdg_init(void)
         }
     }
 
-    // ---------------------------------------------------------------------------------
-    // Pre-render the artifact color modes for fast look-up and 32-bit writes for speed
-    // ---------------------------------------------------------------------------------
-    for (int pixels_byte=0; pixels_byte<16; pixels_byte++)
-    {
-        uint8_t buf2[4];
-        uint8_t pixel = 0;
-        uint8_t pixel2 = 0;
-        uint8_t last_pixel;
-        
-        buffer_index = 0;
-        last_pixel = FB_BLACK;
-        for ( uint8_t element = 0x08; element != 0; element >>= 1)
-        {
-            if (pixels_byte & element)
-            {
-                pixel = FB_BUFF;
-                pixel2 = FB_BUFF;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = (buffer_index & 1) ? ARTIFACT_BLUE : ARTIFACT_ORANGE;
-                    pixel2 = (buffer_index & 1) ? ARTIFACT_ORANGE : ARTIFACT_BLUE;
-                }
-            }
-            else
-            {
-                pixel = FB_BLACK;
-                pixel2 = FB_BLACK;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = (buffer_index & 1) ? ARTIFACT_ORANGE : ARTIFACT_BLUE;
-                    pixel2 = (buffer_index & 1) ? ARTIFACT_BLUE : ARTIFACT_ORANGE;
-                }
-            }
-
-            buf[buffer_index] = pixel;
-            buf2[buffer_index++] = pixel2;
-        }
-
-        color_artifact_0[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
-        color_artifact_0r[pixels_byte] = (buf2[3] << 24) | (buf2[2] << 16) | (buf2[1] << 8) | (buf2[0] << 0);
-
-
-        buffer_index = 0;
-        last_pixel = FB_BUFF;
-        for (uint8_t element = 0x08; element != 0; element >>= 1)
-        {
-            if (pixels_byte & element)
-            {
-                pixel = FB_BUFF;
-                pixel2 = FB_BUFF;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = (buffer_index & 1) ? ARTIFACT_BLUE : ARTIFACT_ORANGE;
-                    pixel2 = (buffer_index & 1) ? ARTIFACT_ORANGE : ARTIFACT_BLUE;
-                }
-            }
-            else
-            {
-                pixel = FB_BLACK;
-                pixel2 = FB_BLACK;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = (buffer_index & 1) ? ARTIFACT_ORANGE : ARTIFACT_BLUE;
-                    pixel2 = (buffer_index & 1) ? ARTIFACT_BLUE : ARTIFACT_ORANGE;
-                }
-            }
-
-            buf[buffer_index] = pixel;
-            buf2[buffer_index++] = pixel2;
-        }
-
-        color_artifact_1[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
-        color_artifact_1r[pixels_byte] = (buf2[3] << 24) | (buf2[2] << 16) | (buf2[1] << 8) | (buf2[0] << 0);
-    }
-
+    // ------------------------------------------------------------------------
+    // Pre-render the high-rez modes. The MC-10 doesn't do proper artifacting 
+    // as it lacks a color burst circuit so we basically render any high-rez
+    // PMODE 4 stuff in monochrome. Given the memory limitations of the VDG, 
+    // almost nothing uses this anyway...
+    // ------------------------------------------------------------------------
     for (int pixels_byte=0; pixels_byte<16; pixels_byte++)
     {
         buffer_index = 0;
@@ -283,73 +195,6 @@ void vdg_init(void)
         }
         color_artifact_mono_1[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
     }
-    
-    
-    // ---------------------------------------------------------------------------------
-    // Pre-render the artifact color modes for fast look-up and 32-bit writes for speed
-    // This one is for the "muddied green artifacting" when using the green color set.
-    // ---------------------------------------------------------------------------------
-    for (int pixels_byte=0; pixels_byte<16; pixels_byte++)
-    {
-        uint8_t pixel = 0;
-        uint8_t last_pixel;
-        
-        buffer_index = 0;
-        last_pixel = FB_BLACK;
-        for ( uint8_t element = 0x08; element != 0; element >>= 1)
-        {
-            if (pixels_byte & element)
-            {
-                pixel = FB_GREEN;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = ARTIFACT_GREEN;
-                }
-            }
-            else
-            {
-                pixel = FB_BLACK;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = ARTIFACT_GREEN;
-                }
-            }
-
-            buf[buffer_index++] = pixel;
-        }
-
-        color_artifact_green0[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
-
-        buffer_index = 0;
-        last_pixel = FB_GREEN;
-        for (uint8_t element = 0x08; element != 0; element >>= 1)
-        {
-            if (pixels_byte & element)
-            {
-                pixel = FB_GREEN;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = FB_GREEN;
-                }
-            }
-            else
-            {
-                pixel = FB_BLACK;
-                if (pixel != last_pixel)
-                {
-                    last_pixel = pixel;
-                    pixel  = FB_GREEN;
-                }
-            }
-
-            buf[buffer_index++] = pixel;
-        }
-
-        color_artifact_green1[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
-    }    
 }
 
 /*------------------------------------------------
@@ -357,32 +202,26 @@ void vdg_init(void)
  *
  *  Render video display.
  *  A full screen rendering is performed at every invocation on the function.
- *  The function should be called periodically and will execute a screen refresh only
- *  if 20 milliseconds of more have elapsed since the last refresh (50Hz).
  *
- *  param:  Nothing
- *  return: Nothing
  */
-int reduce_framerate_for_tape = 0;
 ITCM_CODE void vdg_render(void)
 {
-    int     vdg_mem_base;
+    int vdg_mem_base = 0x4000;
 
-    if (tape_motor)
+    if (tape_motor == 2)
     {
+        // When loading tape, the screen refresh is reduced to give more emulation speed
         if (++reduce_framerate_for_tape < 10) return;
         reduce_framerate_for_tape = 0;
     }
 
     /* VDG/SAM mode settings
      */
-    current_mode = vdg_get_mode();
+    current_vdg_mode = vdg_get_mode();
 
     /* Render screen content to frame buffer
      */
-    vdg_mem_base = 0x4000;
-
-    switch ( current_mode )
+    switch ( current_vdg_mode )
     {
         case ALPHA_INTERNAL:
         case SEMI_GRAPHICS_4:
@@ -398,17 +237,17 @@ ITCM_CODE void vdg_render(void)
         case GRAPHICS_2C:
         case GRAPHICS_3C:
         case GRAPHICS_6C:
-            vdg_render_color_graph(current_mode, vdg_mem_base);
+            vdg_render_color_graph(current_vdg_mode, vdg_mem_base);
             break;
 
         case GRAPHICS_1R:
         case GRAPHICS_2R:
         case GRAPHICS_3R:
-            vdg_render_resl_graph(current_mode, vdg_mem_base);
+            vdg_render_resl_graph(current_vdg_mode, vdg_mem_base);
             break;
 
         case GRAPHICS_6R:
-            vdg_render_artifacting_mono(current_mode, vdg_mem_base);
+            vdg_render_artifacting_mono(current_vdg_mode, vdg_mem_base);
             break;
 
         default:
@@ -430,15 +269,19 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
     int         c, row, col, font_row;
     int         char_index, row_address;
     uint8_t     bit_pattern;
-    uint8_t     color_set, fg_color;
+    uint8_t     color_set;
+    uint8_t     vdg_control_reg = Memory[0xbfff];
 
     uint32_t    *screen_buffer = (uint32_t *)0x06000000;
 
-    if ( Memory[0xbfff] & PIA_COLOR_SET )
+    if ( vdg_control_reg & PIA_COLOR_SET )
         color_set = FB_LTORG;
     else
         color_set = FB_GREEN;
 
+    // If we are running with MCX 'Large Model', the Video memory is in the other bank
+    uint8_t *screen_memory = (mcx_ram_bank1) ? Memory_MCX : Memory;
+        
     for ( row = 0; row < SCREEN_HEIGHT_CHAR; row++ )
     {
         row_address = row * SCREEN_WIDTH_CHAR + vdg_mem_base;
@@ -447,8 +290,8 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
         {
             for ( col = 0; col < SCREEN_WIDTH_CHAR; col++ )
             {
-                c = Memory[(col + row_address) & 0x4fff];
-
+                c = screen_memory[(col + row_address) & 0x4fff];
+                
                 /* Mode dependent initialization
                  * for text or semigraphics 4:
                  * - Determine foreground and background colors
@@ -458,7 +301,7 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
                  */
                 if ( (uint8_t)c & CHAR_SEMI_GRAPHICS )
                 {
-                    fg_color = 1+(((uint8_t)c & 0b01110000) >> 4);
+                    uint8_t fg_color = 1+(((uint8_t)c & 0b01110000) >> 4);
                     char_index = (int)(((uint8_t) c) & SEMI_GRAPH4_MASK);
                     bit_pattern = semi_graph_4[char_index][font_row];
 
@@ -469,8 +312,6 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
                 }
                 else
                 {
-                    fg_color = color_set;
-
                     char_index = (int)(((uint8_t) c) & ~(CHAR_SEMI_GRAPHICS | CHAR_INVERSE));
                     bit_pattern = font_img5x7[char_index][font_row];
                     if ( (uint8_t)c & CHAR_INVERSE )
@@ -480,15 +321,15 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
 
                     /* Render a row of pixels directly to the screen buffer - 32-bit speed!
                      */
-                     if ( Memory[0xbfff] & PIA_COLOR_SET )
+                     if ( vdg_control_reg & PIA_COLOR_SET )
                      {
-                        *screen_buffer++ = color_translation_32a[fg_color][bit_pattern >> 4];
-                        *screen_buffer++ = color_translation_32a[fg_color][bit_pattern & 0xF];
+                        *screen_buffer++ = color_translation_32a[color_set][bit_pattern >> 4];
+                        *screen_buffer++ = color_translation_32a[color_set][bit_pattern & 0xF];
                      }
                      else
                      {
-                        *screen_buffer++ = color_translation_32[fg_color][bit_pattern >> 4];
-                        *screen_buffer++ = color_translation_32[fg_color][bit_pattern & 0xF];
+                        *screen_buffer++ = color_translation_32[color_set][bit_pattern >> 4];
+                        *screen_buffer++ = color_translation_32[color_set][bit_pattern & 0xF];
                      }
                 }
             }
@@ -744,59 +585,48 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
 }
 
 
-// --------------------------------------------------------------------
-// Handler for GRAPHICS_6R - this one is high-rez with artifacting...
-// It's the most complicated but also the hallmark of the NTSC Coco.
-// --------------------------------------------------------------------
+// ------------------------------------------------------------------------
+// Handler for GRAPHICS_6R - The MC-10 does not have proper color-burst
+// signal like the Coco 2 and so the artifacting doesn't really happen.
+// Therefore, we just output this as pure mono (White/Black or Green/Black)
+// No need to get fancy, virtually nothing on the MC-10 uses this anyway.
+// ------------------------------------------------------------------------
 ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
 {
     int         vdg_mem_offset;
     int         video_mem;
-    uint8_t     pixels_byte;
+    uint8_t     pixels_byte, fg_color;
     uint32_t   *screen_buffer;
-    uint8_t     last_pixel = FB_BLACK;
-    int         pix_char = 0;
+    uint8_t     pix_char = 0;
 
     if ( Memory[0xbfff] & PIA_COLOR_SET )
     {
-        // This is the NTSC Black/White artifacting mode...
+        fg_color = colors[DEF_COLOR_CSS_1];
     }
-    else // Mono... just greens in this case
+    else
     {
-        vdg_render_artifacting_green(mode, vdg_mem_base);
-        return;
-    }
-    
+        fg_color = colors[DEF_COLOR_CSS_0];
+    }    
+
     screen_buffer = (uint32_t *) (0x06000000);
 
     video_mem = resolution[mode][RES_MEM];
     uint8_t bDoubleRez = ((resolution[mode][RES_ROW_REP]) > 1) ? 1:0;
 
-    last_pixel = ((Memory[vdg_mem_base & 0x4fff] & 0xC0) == 0xC0) ? FB_BUFF : FB_BLACK;
-    
     for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
     {
-        pixels_byte = Memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
+        pixels_byte = Memory[vdg_mem_offset + vdg_mem_base];
 
-        if (last_pixel)
+        if (fg_color == FB_GREEN)
         {
-            *screen_buffer++ = color_artifact_1[(pixels_byte>>4) & 0x0F];
+            *screen_buffer++ = color_artifact_mono_1[(pixels_byte>>4) & 0x0F];
+            *screen_buffer++ = color_artifact_mono_1[pixels_byte & 0x0F];
         }
         else
         {
-            *screen_buffer++ = color_artifact_0[(pixels_byte>>4) & 0x0F];
+            *screen_buffer++ = color_artifact_mono_0[(pixels_byte>>4) & 0x0F];
+            *screen_buffer++ = color_artifact_mono_0[pixels_byte & 0x0F];
         }
-        
-        if (pixels_byte & 0x10)
-        {
-            *screen_buffer++ = color_artifact_1[pixels_byte & 0x0F];
-        }
-        else
-        {
-            *screen_buffer++ = color_artifact_0[pixels_byte & 0x0F];
-        }
-
-        last_pixel = (pixels_byte & 1) ? FB_BUFF : FB_BLACK;
 
         // Check if full line rendered... 32 chars (256 pixels)
         if (++pix_char & 0x20)
@@ -807,61 +637,6 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
                 memcpy(screen_buffer, screen_buffer-64, SCREEN_WIDTH_PIX);
                 screen_buffer += 64;
             }
-            last_pixel = ((Memory[(vdg_mem_offset + vdg_mem_base + 1) & 0x4fff] & 0xC0) == 0xC0) ? FB_BUFF : FB_BLACK;
-        }
-    }
-}
-
-ITCM_CODE void vdg_render_artifacting_green(video_mode_t mode, int vdg_mem_base)
-{
-    int         vdg_mem_offset;
-    int         video_mem;
-    uint8_t     pixels_byte;
-    uint32_t   *screen_buffer;
-    uint8_t     last_pixel = FB_BLACK;
-    int         pix_char = 0;
-
-    screen_buffer = (uint32_t *) (0x06000000);
-
-    video_mem = resolution[mode][RES_MEM];
-    uint8_t bDoubleRez = ((resolution[mode][RES_ROW_REP]) > 1) ? 1:0;
-
-    last_pixel = ((Memory[vdg_mem_base & 0x4fff] & 0xC0) == 0xC0) ? FB_GREEN : FB_BLACK;
-    
-    for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
-    {
-        pixels_byte = Memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
-
-        if (last_pixel)
-        {
-            *screen_buffer++ = color_artifact_green1[(pixels_byte>>4) & 0x0F];
-        }
-        else
-        {
-            *screen_buffer++ = color_artifact_green0[(pixels_byte>>4) & 0x0F];
-        }
-        
-        if (pixels_byte & 0x10)
-        {
-            *screen_buffer++ = color_artifact_green1[pixels_byte & 0x0F];
-        }
-        else
-        {
-            *screen_buffer++ = color_artifact_green0[pixels_byte & 0x0F];
-        }
-
-        last_pixel = (pixels_byte & 1) ? FB_GREEN : FB_BLACK;
-
-        // Check if full line rendered... 32 chars (256 pixels)
-        if (++pix_char & 0x20)
-        {
-            pix_char = 0;
-            if (bDoubleRez)
-            {                
-                memcpy(screen_buffer, screen_buffer-64, SCREEN_WIDTH_PIX);
-                screen_buffer += 64;
-            }
-            last_pixel = ((Memory[(vdg_mem_offset + vdg_mem_base + 1) & 0x4fff] & 0xC0) == 0xC0) ? FB_GREEN : FB_BLACK;
         }
     }
 }
@@ -869,13 +644,13 @@ ITCM_CODE void vdg_render_artifacting_green(video_mode_t mode, int vdg_mem_base)
 /*------------------------------------------------
  * vdg_get_mode()
  *
- * Parse 'sam_video_mode' and 'pia_video_mode' and return video mode type.
+ * Parse the MC-10 VDG control register
  *
  * param:  None
  * return: Video mode
  *
  */
-video_mode_t vdg_get_mode(void)
+ITCM_CODE video_mode_t vdg_get_mode(void)
 {
     video_mode_t mode = UNDEFINED;
 
@@ -930,3 +705,5 @@ video_mode_t vdg_get_mode(void)
     
     return mode;
 }
+
+// End of file

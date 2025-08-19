@@ -671,10 +671,10 @@ void SetDefaultGameConfig(void)
     MapWAZS();                   // Default to normal keyboard/cursor handling
 
     myConfig.machine     = myGlobalConfig.defMachine;   // Default is Tandy MC-10
-    myConfig.autoFire    = 0;                           // Default to no auto-fire on either button
-    myConfig.dpad        = DPAD_NORMAL;                 // Normal DPAD use - mapped to joystick
+    myConfig.dpad        = DPAD_NORMAL;                 // Normal DPAD use - mapped to cursor keys
     myConfig.autoLoad    = tape_guess_type();           // Default is to to auto-load games - try to autodetect
     myConfig.gameSpeed   = 0;                           // Default is 100% game speed
+    myConfig.reserved0   = 0;
     myConfig.reserved1   = 0;
     myConfig.reserved2   = 0;
     myConfig.reserved3   = 0;
@@ -766,7 +766,7 @@ const struct options_t Option_Table[2][20] =
 {
     // Game Specific Configuration
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)"},                       &myConfig.machine,           2},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128"},            &myConfig.machine,           3},
         {"AUTO LOAD",      {"NO", "CLOAD [RUN]", "CLOADM [EXEC]"},                     &myConfig.autoLoad,          3},
         {"GAME SPEED",     {"100%", "110%", "120%", "130%", "90%", "80%"},             &myConfig.gameSpeed,         6},
         {"NDS D-PAD",      {"NORMAL", "SLIDE-N-GLIDE", "DIAGONALS"},                   &myConfig.dpad,              3},
@@ -774,7 +774,7 @@ const struct options_t Option_Table[2][20] =
     },
     // Global Options
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)"},                       &myGlobalConfig.defMachine,  2},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128"},            &myGlobalConfig.defMachine,  3},
         {"FPS",            {"OFF", "ON", "ON FULLSPEED"},                              &myGlobalConfig.showFPS,     3},
         {"DEBUGGER",       {"OFF", "ON"},                                              &myGlobalConfig.debugger,    2},
         {NULL,             {"",      ""},                                              NULL,                        1},

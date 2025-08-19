@@ -40,6 +40,7 @@
 
 #define MACHINE_20K                 0
 #define MACHINE_32K                 1
+#define MACHINE_MCX                 2
 
 extern unsigned char MC10BASIC[0x2000];
 extern unsigned char MCXBASIC[0x4000];
@@ -48,9 +49,7 @@ extern char last_path[MAX_FILENAME_LEN];
 extern char last_file[MAX_FILENAME_LEN];
 
 extern u32 micro_line;
-extern u8  micro_special_key;
 extern u32 last_file_size;
-extern u32 micro_scanline_counter;
 extern u32 file_size;
 extern u32 tape_pos;
 extern u8  tape_motor;
@@ -97,7 +96,7 @@ struct __attribute__((__packed__)) Config_t
     u8  machine;
     u8  autoLoad;
     u8  gameSpeed;
-    u8  autoFire;
+    u8  reserved0;
     u8  dpad;
     u8  reserved1;
     u8  reserved2;

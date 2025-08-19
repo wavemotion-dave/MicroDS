@@ -88,9 +88,7 @@ typedef enum
 /* -----------------------------------------
    Module globals
 ----------------------------------------- */
-extern int          video_ram_offset;
-extern int          sam_video_mode;
-extern video_mode_t current_mode;
+extern video_mode_t current_vdg_mode;
 
 void vdg_init(void);
 void vdg_render(void);
