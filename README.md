@@ -17,7 +17,7 @@ Features :
 * 4K Internal RAM + 16K External Expansion RAM for 20K total (+128 byte CPU RAM).
 * Optional memory expansion to 32K in machine configuration.
 * Optional emulation of the MCX-128 peripheral with MCXBASIC 2.1
-* Cassette (.c10) support for loading games and programs.
+* Cassette (.C10) support for loading games and programs.
 * Save/Load Game State (one slot).
 * LCD Screen Swap (press and hold L+R+X during gameplay).
 * LCD Screen snapshot - (press and hold L+R+Y during gameplay and the .png file will be written to the SD card).
@@ -153,11 +153,17 @@ And then move the soundbank.h file to the arm9/sources directory
 
 Versions :
 -----------------------
-0.8: 17-Aug-2024 by wavemotion-dave
+V0.9: 21-Aug-2024 by wavemotion-dave
+* Implemented all undocumented 6803 CPU opcodes.
+* Added partial MCX support for MCXBASIC 2.1
+* Improved timer handling and implemented proper timer counter latching.
+* Cleanup and commenting across the board as time permitted.
+
+V0.8: 17-Aug-2024 by wavemotion-dave
 * Fix for SG6 graphics when character index is > 128
 * A subset of 'common' 6803 undocumented instructions added.
 * START issues CLOAD/CLOADM and SELECT issues the RUN command.
 * Cleanup of configuration and key map handling.
 * Removed partial MCX support until a better plan can be had.
 
-0.7: 15-Aug-2024 - First public beta.
+V0.7: 15-Aug-2024 - First public beta.

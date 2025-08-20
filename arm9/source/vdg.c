@@ -662,7 +662,7 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
  * return: Video mode
  *
  */
-ITCM_CODE video_mode_t vdg_get_mode(void)
+video_mode_t vdg_get_mode(void)
 {
     video_mode_t mode = UNDEFINED;
 

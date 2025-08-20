@@ -62,6 +62,7 @@
  */
 uint8_t adc(uint8_t acc, uint8_t byte);
 uint8_t add(uint8_t acc, uint8_t byte);
+uint8_t addx(uint8_t acc, uint8_t byte);
 void    addd(uint16_t word);
 uint8_t and(uint8_t acc, uint8_t byte);
 uint8_t asl(uint8_t byte);
@@ -74,6 +75,7 @@ uint8_t com(uint8_t byte);
 void    wai(void);
 void    daa(void);
 uint8_t dec(uint8_t byte);
+uint8_t decc(uint8_t byte);
 uint8_t eor(uint8_t acc, uint8_t byte);
 uint8_t inc(uint8_t byte);
 uint8_t lsr(uint8_t byte);
@@ -155,7 +157,7 @@ void cpu_init(void)
      */
     cpu.reset_asserted  = 0;
     cpu.cpu_state       = CPU_HALTED;
-    
+
     cpu.counter         = 0;
     cpu.compare         = 0xffff;
 
@@ -225,7 +227,7 @@ ITCM_CODE void cpu_run(void)
                         Memory[0x08] |= TCSR_TOF;
                     }
                 }
-                
+
                 if ( !(cc.i) && (Memory[0x08] & TCSR_TOF) && (Memory[0x08] & TCSR_ETOI) )
                 {
                     cpu.cpu_state = CPU_EXEC;
@@ -244,7 +246,7 @@ ITCM_CODE void cpu_run(void)
                     return;
                 }
             }
-            
+
             if (cpu.cpu_state == CPU_EXCEPTION)
             {
                 return;
@@ -275,7 +277,7 @@ ITCM_CODE void cpu_run(void)
                 cpu.sp--;
                 mem_write(cpu.sp, get_cc());
                 cpu.sp--;
-                                
+
                 cc.i = CC_FLAG_SET;  // No more interrupts until cleared
                 cpu.pc = (mem_read(VEC_TOF) << 8) + mem_read(VEC_TOF+1);
             }
@@ -299,7 +301,7 @@ ITCM_CODE void cpu_run(void)
                 cpu.sp--;
                 mem_write(cpu.sp, get_cc());
                 cpu.sp--;
-                
+
                 cc.i = CC_FLAG_SET;  // No more interrupts until cleared
                 cpu.pc = (mem_read(VEC_OCF) << 8) + mem_read(VEC_OCF+1);
             }
@@ -307,7 +309,7 @@ ITCM_CODE void cpu_run(void)
 
         // Fetch the OP Code directly from memory
         op_code = mem_read_pc(cpu.pc++);
-        
+
         // Process the Op-Code...
         {
             /* 'operand8' will be operand byte, and for a 16-bit operand 'operand8'
@@ -315,7 +317,7 @@ ITCM_CODE void cpu_run(void)
              * and combined into 16-bit value.
              */
             cycles_this_scanline += machine_code[op_code].cycles;
-            
+
             // --------------------------------------------------------------
             // Counters and clocks... this is where we handle the CPU timer
             // module with the free-running timer counter and a compare reg.
@@ -335,7 +337,7 @@ ITCM_CODE void cpu_run(void)
             }
 
             eff_addr = get_eff_addr(machine_code[op_code].mode);
-            
+
             switch ( op_code )
             {
                 // ABA
@@ -429,7 +431,7 @@ ITCM_CODE void cpu_run(void)
                     operand8 = (uint8_t) mem_read(eff_addr);
                     bit(cpu.ab.ab.b, operand8);
                     break;
-                    
+
                 // CBA
                 case 0x11:
                     cmp(cpu.ab.ab.a, cpu.ab.ab.b);
@@ -441,12 +443,12 @@ ITCM_CODE void cpu_run(void)
                     operand8 = clr();
                     mem_write(eff_addr, operand8);
                     break;
-                
+
                 // CLRA
                 case 0x4f:
                     cpu.ab.ab.a = clr();
                     break;
-                
+
                 // CLRB
                 case 0x5f:
                     cpu.ab.ab.b = clr();
@@ -492,7 +494,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x43:
                     cpu.ab.ab.a = com(cpu.ab.ab.a);
                     break;
-                    
+
                 // COMB
                 case 0x53:
                     cpu.ab.ab.b = com(cpu.ab.ab.b);
@@ -546,7 +548,7 @@ ITCM_CODE void cpu_run(void)
                     operand8 = inc(operand8);
                     mem_write(eff_addr, operand8);
                     break;
-                    
+
                 // INCA
                 case 0x4c:
                     cpu.ab.ab.a = inc(cpu.ab.ab.a);
@@ -556,7 +558,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x5c:
                     cpu.ab.ab.b = inc(cpu.ab.ab.b);
                     break;
-                    
+
                 // LDA
                 case 0x86:
                 case 0x96:
@@ -589,10 +591,9 @@ ITCM_CODE void cpu_run(void)
                     eval_cc_z16(cpu.ab.d);
                     eval_cc_n16(cpu.ab.d);
                     cc.v = CC_FLAG_CLR;
-                    break;                    
+                    break;
 
                 // LSL
-                case 0x65:
                 case 0x78:
                     operand8 = (uint8_t) mem_read(eff_addr);
                     operand8 = lsl(operand8);
@@ -608,7 +609,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x58:
                     cpu.ab.ab.b = lsl(cpu.ab.ab.b);
                     break;
-                    
+
                 // ASL
                 case 0x68:
                     operand8 = (uint8_t) mem_read(eff_addr);
@@ -628,11 +629,11 @@ ITCM_CODE void cpu_run(void)
                 case 0x47:
                     cpu.ab.ab.a = asr(cpu.ab.ab.a);
                     break;
-                
+
                 // ASRB
                 case 0x57:
                     cpu.ab.ab.b = asr(cpu.ab.ab.b);
-                    break;                                        
+                    break;
 
                 // LSLD/ASLD
                 case 0x05:
@@ -649,11 +650,13 @@ ITCM_CODE void cpu_run(void)
 
                 // LSRA
                 case 0x44:
+                case 0x45:
                     cpu.ab.ab.a = lsr(cpu.ab.ab.a);
                     break;
 
                 // LSRB
                 case 0x54:
+                case 0x55:
                     cpu.ab.ab.b = lsr(cpu.ab.ab.b);
                     break;
 
@@ -682,7 +685,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x40:
                     cpu.ab.ab.a = neg(cpu.ab.ab.a);
                     break;
-                    
+
                 // NEGB
                 case 0x50:
                     cpu.ab.ab.b = neg(cpu.ab.ab.b);
@@ -691,7 +694,7 @@ ITCM_CODE void cpu_run(void)
                 // NOP
                 case 0x01:
                     break;
-                
+
                 // ORA
                 case 0x8a:
                 case 0x9a:
@@ -741,7 +744,7 @@ ITCM_CODE void cpu_run(void)
                     operand8 = rol(operand8);
                     mem_write(eff_addr, operand8);
                     break;
-                    
+
                 // ROLA
                 case 0x49:
                     cpu.ab.ab.a = rol(cpu.ab.ab.a);
@@ -774,7 +777,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x10:
                     cpu.ab.ab.a = sub(cpu.ab.ab.a, cpu.ab.ab.b);
                     break;
-                    
+
                 // SBCA
                 case 0x82:
                 case 0x92:
@@ -855,6 +858,7 @@ ITCM_CODE void cpu_run(void)
 
                 // TAB
                 case 0x16:
+                case 0x1e:
                     cpu.ab.ab.b = cpu.ab.ab.a;
                     eval_cc_z((uint16_t) cpu.ab.ab.b);
                     eval_cc_n((uint16_t) cpu.ab.ab.b);
@@ -960,7 +964,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x29:
                     if ( cc.v == CC_FLAG_SET ) cpu.pc = eff_addr;
                     break;
-                    
+
                 // BVC
                 case 0x28:
                     if ( cc.v == CC_FLAG_CLR ) cpu.pc = eff_addr;
@@ -1030,7 +1034,7 @@ ITCM_CODE void cpu_run(void)
                     eval_cc_n16(cpu.x);
                     cc.v = CC_FLAG_CLR;
                     break;
-                    
+
                 // STX
                 case 0xdf:
                 case 0xef:
@@ -1041,7 +1045,7 @@ ITCM_CODE void cpu_run(void)
                     eval_cc_n16(cpu.x);
                     cc.v = CC_FLAG_CLR;
                     break;
-                    
+
                 // PSHX
                 case 0x3c:
                     mem_write(cpu.sp, (uint8_t) (cpu.x));
@@ -1130,7 +1134,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x0b:
                     cc.v = CC_FLAG_SET;
                     break;
-                    
+
                 // TAP
                 case 0x06:
                     set_cc(cpu.ab.ab.a);
@@ -1140,7 +1144,7 @@ ITCM_CODE void cpu_run(void)
                 case 0x07:
                     cpu.ab.ab.a = get_cc();
                     break;
-                    
+
                 // WAI
                 case 0x3e:
                     wai();
@@ -1151,6 +1155,11 @@ ITCM_CODE void cpu_run(void)
                     swi();
                     break;
                     
+                // ==================================================================================
+                // The undocumented/illegal opcodes start here... most of these are never used but
+                // there are a few 'popular' ones... notably SEXA, SETA and the various NGC opcodes.
+                // ==================================================================================
+
                 // Undocumented: CLB - Clear B
                 case 0x00:
                     cpu.ab.ab.b = 0; // Flags not affected
@@ -1158,24 +1167,24 @@ ITCM_CODE void cpu_run(void)
 
                 // Undocumented: SEXA
                 case 0x02:
-                    cpu.ab.ab.a = (cc.c ? 0xFF:0x00);
+                    cpu.ab.ab.a = (cc.c ? 0xFF:0x00);  // Flags not affected
                     break;
-                
-                // Undocumented: SETA    
+
+                // Undocumented: SETA
                 case 0x03:
-                    cpu.ab.ab.a = 0xFF;
+                    cpu.ab.ab.a = 0xFF;  // Flags not affected
                     break;
 
                 // Undocumented: NGC - Negate with Carry A
                 case 0x42:
                     cpu.ab.ab.a = ngc(cpu.ab.ab.a);
                     break;
-                
-                // Undocumented: NGC - Negate with Carry B    
+
+                // Undocumented: NGC - Negate with Carry B
                 case 0x52:
                     cpu.ab.ab.b = ngc(cpu.ab.ab.b);
                     break;
-                    
+
                 // Undocumented: NGC - Negate with Carry
                 case 0x62:
                 case 0x72:
@@ -1184,11 +1193,130 @@ ITCM_CODE void cpu_run(void)
                     mem_write(eff_addr, operand8);
                     break;
 
+                // Undocumented: SCBA
+                case 0x12:
+                    cpu.ab.ab.a = sbc(cpu.ab.ab.a, cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: SDBA
+                case 0x13:
+                    cc.c = CC_FLAG_SET;
+                    cpu.ab.ab.a = sbc(cpu.ab.ab.a, cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: TDAB
+                case 0x14:
+                case 0x1c:
+                    cpu.ab.ab.b = dec(cpu.ab.ab.a);
+                    break;
+
+                // Undocumented: TDBA
+                case 0x15:
+                    cpu.ab.ab.a = dec(cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: TDBC
+                case 0x1d:
+                    cpu.ab.ab.a = decc(cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: TBAC
+                case 0x1f:
+                    cpu.ab.ab.a = cpu.ab.ab.b;
+                    eval_cc_z(cpu.ab.ab.a);
+                    eval_cc_n(cpu.ab.ab.a);
+                    cc.v = CC_FLAG_CLR;
+                    cc.c = CC_FLAG_SET;
+                    break;
+
+                // Undocumented: ABAX
+                case 0x18:
+                case 0x1A:
+                    cpu.ab.ab.a = addx(cpu.ab.ab.a, cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: NGA
+                case 0x41:
+                    (void) neg(cpu.ab.ab.a); // Don't update register
+                    break;
+
+                // Undocumented: NGB
+                case 0x51:
+                    (void) neg(cpu.ab.ab.b); // Don't update register
+                    break;
+
+                // Undocumented: NGX
+                case 0x61:
+                case 0x71:
+                    operand8 = (uint8_t) mem_read(eff_addr);
+                    operand8 = neg(operand8);
+                    mem_write(eff_addr, 0xFF);
+                    break;
+
+                // Undocumented DCA
+                case 0x4b:
+                    cpu.ab.ab.a = decc(cpu.ab.ab.a);
+                    break;
+
+                // Undocumented DCB
+                case 0x5b:
+                    cpu.ab.ab.b = decc(cpu.ab.ab.b);
+                    break;
+
+                // Undocumented: DCX
+                case 0x6b:
+                case 0x7b:
+                    operand8 = (uint8_t) mem_read(eff_addr);
+                    operand8 = decc(operand8);
+                    mem_write(eff_addr, operand8);
+                    break;
+
+                // Undocumented: STAI, STBI
+                case 0x87:
+                case 0xc7:
+                    (void)mem_read(eff_addr);
+                    cc.n = CC_FLAG_SET;
+                    cc.z = CC_FLAG_CLR;
+                    cc.v = CC_FLAG_CLR;
+                    break;
+
+                // Undocumented: LSRX
+                case 0x65:
+                case 0x75:
+                    operand8 = (uint8_t) mem_read(eff_addr);
+                    (void)lsr(operand8);
+                    // CCR only; does not set memory
+                    break;
+
+                // Undocumented: STDI
+                case 0xcd:
+                    mem_write(cpu.pc-1, cpu.ab.d & 0xff);
+                    cc.n = CC_FLAG_SET;
+                    cc.z = CC_FLAG_CLR;
+                    cc.v = CC_FLAG_CLR;
+                    break;
+
+                // Undocumented: STXI
+                case 0xcf:
+                    mem_write(cpu.pc-1, cpu.x & 0xff);
+                    cc.n = CC_FLAG_SET;
+                    cc.z = CC_FLAG_CLR;
+                    cc.v = CC_FLAG_CLR;
+                    break;
+                    
+                // Undocumented: STSI
+                case 0x8f:
+                    mem_write(cpu.pc-1, 0xff);
+                    cc.n = CC_FLAG_SET;
+                    cc.z = CC_FLAG_CLR;
+                    cc.v = CC_FLAG_CLR;
+                    break;
+
                 default:
                     /* Exception: Illegal op-code cpu_run()
                      */
                     if (debug[7] == 0) {debug[7] = op_code;}
-                    cpu.cpu_state = CPU_EXCEPTION;
+                    //cpu.cpu_state = CPU_EXCEPTION;
 
             }
         }
@@ -1244,6 +1372,20 @@ inline __attribute__((always_inline)) uint8_t add(uint8_t acc, uint8_t byte)
 
     return (uint8_t) result;
 }
+
+__attribute__((noinline)) uint8_t addx(uint8_t acc, uint8_t byte)
+{
+    uint16_t result;
+
+    result = (acc + byte);
+
+    eval_cc_z(result);
+    eval_cc_n(result);
+    eval_cc_v(acc, byte, result);
+
+    return (uint8_t) result;
+}
+
 
 /*------------------------------------------------
  * addd()
@@ -1432,7 +1574,7 @@ inline __attribute__((always_inline)) uint8_t com(uint8_t byte)
 /*------------------------------------------------
  * wai()
  *
- *  All registers are pushed onto the stack. The CPU then halts 
+ *  All registers are pushed onto the stack. The CPU then halts
  *  execution and waits for an unmasked interrupt to occur.
  *
  */
@@ -1452,7 +1594,7 @@ inline __attribute__((always_inline)) void wai(void)
     cpu.sp--;
     mem_write(cpu.sp, get_cc());
     cpu.sp--;
-    
+
     cpu.cpu_state = CPU_HALTED;
 }
 
@@ -1507,6 +1649,22 @@ inline __attribute__((always_inline)) uint8_t dec(uint8_t byte)
 
     return (uint8_t) result;
 }
+
+__attribute__((noinline)) uint8_t decc(uint8_t byte)
+{
+    uint16_t result;
+
+    cc.v = (byte == 0x80) ? CC_FLAG_SET : CC_FLAG_CLR;
+    cc.c = (byte == 0x00) ? CC_FLAG_CLR : CC_FLAG_SET;
+
+    result = byte - 1;
+
+    eval_cc_z(result);
+    eval_cc_n(result);
+
+    return (uint8_t) result;
+}
+
 
 /*------------------------------------------------
  * eor()
@@ -1614,13 +1772,13 @@ inline __attribute__((always_inline)) uint8_t lsl(uint8_t byte)
 inline __attribute__((always_inline)) uint16_t lsl16(uint16_t word)
 {
     uint16_t result;
-    
+
     cc.c = (word & 0x8000) ? CC_FLAG_SET: CC_FLAG_CLR;
     result = (word << 1) & 0xfffe;
     cc.z = (result) ? CC_FLAG_CLR : CC_FLAG_SET;
     cc.n = (result & 0x8000) ? CC_FLAG_SET: CC_FLAG_CLR;
     cc.v = (cc.n ^ cc.c) ? CC_FLAG_SET: CC_FLAG_CLR;
-    
+
     return result;
 }
 
@@ -1754,7 +1912,7 @@ inline __attribute__((always_inline)) uint8_t ror(uint8_t byte)
 
     eval_cc_z(result);
     eval_cc_n(result);
-    
+
     cc.v = (cc.n ^ cc.c) ? CC_FLAG_SET: CC_FLAG_CLR;
 
     return (uint8_t) result;
@@ -1839,13 +1997,13 @@ inline __attribute__((always_inline)) void rti(void)
     cpu.sp++;
     set_cc(mem_read(cpu.sp));
 
-    /* Restore registers 
+    /* Restore registers
      */
     cpu.sp++;
     cpu.ab.ab.b = mem_read(cpu.sp);
     cpu.sp++;
     cpu.ab.ab.a = mem_read(cpu.sp);
-    
+
     cpu.sp++;
     cpu.x = mem_read(cpu.sp) << 8;
     cpu.sp++;
@@ -1865,7 +2023,7 @@ inline __attribute__((always_inline)) void rti(void)
  *
  *  Software interrupt.
  */
-inline __attribute__((always_inline)) void swi(void)
+__attribute__((noinline)) void swi(void)
 {
     mem_write(cpu.sp, cpu.pc & 0xff);
     cpu.sp--;
@@ -1880,7 +2038,7 @@ inline __attribute__((always_inline)) void swi(void)
     mem_write(cpu.sp, cpu.ab.ab.b);
     cpu.sp--;
     mem_write(cpu.sp, get_cc());
-    cpu.sp--;    
+    cpu.sp--;
 
     cc.i = CC_FLAG_SET;
     cpu.pc = (mem_read(VEC_SWI) << 8) + mem_read(VEC_SWI+1);
@@ -1946,7 +2104,7 @@ inline __attribute__((always_inline)) int get_eff_addr(int mode)
         case ADDR_LIMMEDIATE:
             effective_addr = cpu.pc;
             cpu.pc += 2;
-            break;            
+            break;
 
         case ADDR_INHERENT:
             break;
@@ -2097,7 +2255,7 @@ inline __attribute__((always_inline)) void eval_cc_h(uint8_t val1, uint8_t val2,
  */
 inline __attribute__((always_inline)) uint8_t get_cc(void)
 {
-    return (uint8_t) (cc.h << 5) + (cc.i << 4) + (cc.n << 3) + (cc.z << 2) + (cc.v << 1) + cc.c;
+    return (uint8_t) ((cc.h << 5) + (cc.i << 4) + (cc.n << 3) + (cc.z << 2) + (cc.v << 1) + cc.c) | 0xC0;
 }
 
 /*------------------------------------------------

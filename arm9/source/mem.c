@@ -249,6 +249,80 @@ ITCM_CODE void unmapped_memory_write(int address, int data)
     }
 }
 
+// ----------------------------------------------------------------------------
+// An MCX IO write which may bank RAM or ROM. We keep this out of fast memory
+// as it takes up a bit of space and we don't call this very often normally.
+// Beyond that... we are only supporting a very limited subset of the RAM bank
+// handling - just enough to allow the video memory to be handled separate 
+// from the main MCXBASIC memory - this allows the 'Large' model to run.
+// ----------------------------------------------------------------------------
+__attribute__((noinline)) void mcx_io_write(int address, int data)
+{
+    Memory[address] = data; // These ports can be read back
+    
+    switch (address & 1)
+    {
+        case 0x00:  // RAM Banking
+            if (mcx_ram_bank0 != (data & 1))
+            {
+                mcx_ram_bank0 = (data & 1);
+                // ----------------------------------------------------------------
+                // I have yet to see any real-world MCX program swap bank 0 out... 
+                // so until I have something to use, we do nothing here.
+                // ----------------------------------------------------------------
+            }
+            if (mcx_ram_bank1 != ((data & 2) >> 1))
+            {
+                mcx_ram_bank1 = ((data & 2) >> 1);
+                
+                // -----------------------------------------------------------------------------------------------------
+                // Switch-a-roo!
+                // There are so few programs that take advantage of the banked memory that we are willing to do this
+                // swap slowly and keep the normal Memory read/write routines fast - it's not worth adding banking 
+                // pointers to slow down 99% of software when this works fine for the few MCX programs that need the
+                // extra memory... So far, only the MCX Large Memory Model (48K) utilizes this banking.
+                //
+                // For now we are only swapping 4K of this bank - that's the video memory (4K) at main memory 0x4000.
+                // That's all that is needed to get the MCX BASIC 'Large' model to run properly. If a program tries 
+                // to utilize more memory than the 48K in the secondary bank plus the 4K Video in the primary bank, 
+                // this emulation won't handle it. If and when the time comes for MCX BASIC games to utilize lots of
+                // the swappable RAM, we will adjust (but it's unlikely as the latest MCX board is only 32K in RAM.
+                // -----------------------------------------------------------------------------------------------------
+                uint32_t tmp;
+                uint32_t *s32 = (uint32_t *)(Memory+0x4000);
+                uint32_t *d32 = (uint32_t *)(Memory_MCX);
+                for (int i=0; i<256; i++) // Copy the 4K Video Memory from 'dtcm' fast memory 16 bytes at a time
+                {
+                    tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                    tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                    tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                    tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                }
+            }
+            break;
+        
+        case 0x01:  // ROM Banking
+            if (mcx_rom_bank != (data & 3))
+            {
+                mcx_rom_bank = (data & 3);
+        
+                // ---------------------------------------------------------------
+                // The only ROM banking we are supporting is switching in of the 
+                // stock 8K MICROBASIC which is option [0] on the MCX main menu. 
+                // ---------------------------------------------------------------
+                if (mcx_rom_bank == 2)
+                {
+                    mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
+                    mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
+                    mcx_ram_bank0 = 0;
+                    mcx_ram_bank1 = 0;
+                    cpu_reset(1);
+                    cpu_check_reset();
+                }
+            }
+            break;
+    }
+}
 
 // -------------------------------------------------------------------------------------------
 // In theory the MC-10 responds to all unmapped addresses between 0x8000 and 0xBFFF but the 
@@ -274,71 +348,7 @@ ITCM_CODE void io_write(int address, int data)
         // ---------------------------------------------
         if ((address & 0x80) == 0)
         {
-            Memory[address] = data; // These ports can be read back
-            
-            switch (address & 1)
-            {
-                case 0x00:  // RAM Banking
-                    if (mcx_ram_bank0 != (data & 1))
-                    {
-                        mcx_ram_bank0 = (data & 1);
-                        // ----------------------------------------------------------------
-                        // I have yet to see any real-world MCX program swap bank 0 out... 
-                        // so until I have something to use, we do nothing here.
-                        // ----------------------------------------------------------------
-                    }
-                    if (mcx_ram_bank1 != ((data & 2) >> 1))
-                    {
-                        mcx_ram_bank1 = ((data & 2) >> 1);
-                        
-                        // -----------------------------------------------------------------------------------------------------
-                        // Switch-a-roo!
-                        // There are so few programs that take advantage of the banked memory that we are willing to do this
-                        // swap slowly and keep the normal Memory read/write routines fast - it's not worth adding banking 
-                        // pointers to slow down 99% of software when this works fine for the few MCX programs that need the
-                        // extra memory... So far, only the MCX Large Memory Model (48K) utilizes this banking.
-                        //
-                        // For now we are only swapping 4K of this bank - that's the video memory (4K) at main memory 0x4000.
-                        // That's all that is needed to get the MCX BASIC 'Large' model to run properly. If a program tries 
-                        // to utilize more memory than the 48K in the secondary bank plus the 4K Video in the primary bank, 
-                        // this emulation won't handle it. If and when the time comes for MCX BASIC games to utilize lots of
-                        // the swappable RAM, we will adjust (but it's unlikely as the latest MCX board is only 32K in RAM.
-                        // -----------------------------------------------------------------------------------------------------
-                        uint32_t tmp;
-                        uint32_t *s32 = (uint32_t *)(Memory+0x4000);
-                        uint32_t *d32 = (uint32_t *)(Memory_MCX);
-                        for (int i=0; i<256; i++) // Copy the 4K Video Memory from 'dtcm' fast memory 16 bytes at a time
-                        {
-                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
-                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
-                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
-                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
-                        }
-                    }
-                    break;
-                
-                case 0x01:  // ROM Banking
-                    if (mcx_rom_bank != (data & 3))
-                    {
-                        mcx_rom_bank = (data & 3);
-                
-                        // ---------------------------------------------------------------
-                        // The only ROM banking we are supporting is switching in of the 
-                        // stock 8K MICROBASIC which is option [0] on the MCX main menu. 
-                        // ---------------------------------------------------------------
-                        if (mcx_rom_bank == 2)
-                        {
-                            mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
-                            mem_load_rom(0xe000, MC10BASIC, sizeof(MC10BASIC)); // ROM normally runs here
-                            mcx_ram_bank0 = 0;
-                            mcx_ram_bank1 = 0;
-                            cpu_reset(1);
-                            cpu_check_reset();
-                        }
-                    }
-                    break;
-            }
-            
+            mcx_io_write(address, data);
             return;
         }
     }
