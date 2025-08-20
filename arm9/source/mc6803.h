@@ -31,277 +31,25 @@
 
 char *op_name[256] =
 {
-    "ILL",
-    "NOP",
-    "SEXA",
-    "SETA",
-    "LSRD",
-    "LSLD",
-    "TAP",
-    "TPA",
-    "INX",
-    "DEX",
-    "CLV",
-    "SEV",
-    "CLC",
-    "SEC",
-    "CLI",
-    "SEI",
-    
-    "SBA",
-    "CBA",
-    "ILL",
-    "ILL",
-    "ILL",
-    "ILL",
-    "TAB",
-    "TBA",
-    "ILL",
-    "DAA",
-    "ILL",
-    "ABA",
-    "ILL",
-    "ILL",
-    "ILL",
-    "ILL",
-    
-    "BRA",
-    "BRN",
-    "BHI",
-    "BLS",
-    "BCC",
-    "BCS",
-    "BNE",
-    "BEQ",
-    "BVC",
-    "BVS",
-    "BPL",
-    "BMI",
-    "BGE",
-    "BLT",
-    "BGT",
-    "BLE",
-    
-    "TSX",
-    "INS",
-    "PULA",
-    "PULB",
-    "DES",
-    "TXS",
-    "PSHA",
-    "PSHB",
-    "PULX",
-    "RTS",
-    "ABX",
-    "RTI",
-    "PSHX",
-    "MUL",
-    "WAI",
-    "SWI",
-    
-    "NEGA",
-    "ILL",
-    "NGCA",
-    "COMA",
-    "LSRA",
-    "ILL",
-    "RORA",
-    "ASRA",
-    "LSLA",
-    "ROLA",
-    "DECA",
-    "ILL",
-    "INCA",
-    "TSTA",
-    "ILL",
-    "CLRA",
+    "CLB",  "NOP",  "SEXA", "SETA", "LSRD", "LSLD", "TAP",  "TPA",  "INX",  "DEX",  "CLV",  "SEV",  "CLC",  "SEC",  "CLI",  "SEI",
+    "SBA",  "CBA",  "SCBA", "SDBA", "TDAB", "TDBA", "TAB",  "TBA",  "ABAX", "DAA",  "ABAX", "ABA",  "TDAB", "TDBC", "TAB",  "TBAC",
+    "BRA",  "BRN",  "BHI",  "BLS",  "BCC",  "BCS",  "BNE",  "BEQ",  "BVC",  "BVS",  "BPL",  "BMI",  "BGE",  "BLT",  "BGT",  "BLE",
+    "TSX",  "INS",  "PULA", "PULB", "DES",  "TXS",  "PSHA", "PSHB", "PULX", "RTS",  "ABX",  "RTI",  "PSHX", "MUL",  "WAI",  "SWI",
 
-    "NEGB",
-    "ILL",
-    "NGCB",
-    "COMB",
-    "LSRB",
-    "ILL",
-    "RORB",
-    "ASRB",
-    "LSLB",
-    "ROLB",
-    "DECB",
-    "ILL",
-    "INCB",
-    "TSTB",
-    "ILL",
-    "CLRB",
+    "NEGA", "NGA",  "NGCA", "COMA", "LSRA", "LSRA", "RORA", "ASRA", "LSLA", "ROLA", "DECA", "DCA",  "INCA", "TSTA", "ILL",  "CLRA",
+    "NEGB", "NGB",  "NGCB", "COMB", "LSRB", "LSRB", "RORB", "ASRB", "LSLB", "ROLB", "DECB", "DCB",  "INCB", "TSTB", "ILL",  "CLRB",
+    "NEG",  "NGX",  "NGC",  "COM",  "LSR",  "LSRX", "ROR",  "ASR",  "ASL",  "ROL",  "DEC",  "DCX",  "INC",  "TST",  "JMP",  "CLR",
+    "NEG",  "NGX",  "NGC",  "COM",  "LSR",  "LSRX", "ROR",  "ASR",  "ASL",  "ROL",  "DEC",  "DCX",  "INC",  "TST",  "JMP",  "CLR",
 
-    "NEG",
-    "ILL",
-    "NGC",
-    "COM",
-    "LSR",
-    "LSL",
-    "ROR",
-    "ASR",
-    "ILL",
-    "ROL",
-    "DEC",
-    "ILL",
-    "INC",
-    "TST",
-    "JMP",
-    "CLR",
+    "SUBA", "CMPA", "SBCA", "SUBD", "ANDA", "BITA", "LDA",  "STAI", "EORA", "ADCA", "ORA",  "ADDA", "CMPX", "BSR",  "LDS",  "STSI",
+    "SUBA", "CMPA", "SBCA", "SUBD", "ANDA", "BITA", "LDA",  "STA",  "EORA", "ADCA", "ORA",  "ADDA", "CMPX", "JSR",  "LDS",  "STS",
+    "SUBA", "CMPA", "SBCA", "SUBD", "ANDA", "BITA", "LDA",  "STA",  "EORA", "ADCA", "ORA",  "ADDA", "CMPX", "JSR",  "LDS",  "STS",
+    "SUBA", "CMPA", "SBCA", "SUBD", "ANDA", "BITA", "LDA",  "STA",  "EORA", "ADCA", "ORA",  "ADDA", "CMPX", "JSR",  "LDS",  "STS",
 
-    "NEG",
-    "ILL",
-    "NGC",
-    "COM",
-    "LSR",
-    "ILL",
-    "ROR",
-    "ASR",
-    "LSL",
-    "ROL",
-    "DEC",
-    "ILL",
-    "INC",
-    "TST",
-    "JMP",
-    "CLR",
-
-    "SUBA",
-    "CMPA",
-    "SBCA",
-    "SUBD",
-    "ANDA",
-    "BITA",
-    "LDA",
-    "ILL",
-    "EORA",
-    "ADCA",
-    "ORA",
-    "ADDA",
-    "CMPX",
-    "BSR",
-    "LDS",
-    "ILL",
-
-    "SUBA",
-    "CMPA",
-    "SBCA",
-    "SUBD",
-    "ANDA",
-    "BITA",
-    "LDA",
-    "STA",
-    "EORA",
-    "ADCA",
-    "ORA",
-    "ADDA",
-    "CMPX",
-    "JSR",
-    "LDS",
-    "STS",
-
-    "SUBA",
-    "CMPA",
-    "SBCA",
-    "SUBD",
-    "ANDA",
-    "BITA",
-    "LDA",
-    "STA",
-    "EORA",
-    "ADCA",
-    "ORA",
-    "ADDA",
-    "CMPX",
-    "JSR",
-    "LDS",
-    "STS",
-
-    "SUBA",
-    "CMPA",
-    "SBCA",
-    "SUBD",
-    "ANDA",
-    "BITA",
-    "LDA",
-    "STA",
-    "EORA",
-    "ADCA",
-    "ORA",
-    "ADDA",
-    "CMPX",
-    "JSR",
-    "LDS",
-    "STS",
-
-    "SUBB",
-    "CMPB",
-    "SBCB",
-    "ADDD",
-    "ADDB",
-    "BITB",
-    "LDB",
-    "ILL",
-    "EORB",
-    "ADCB",
-    "ORB",
-    "ADDB",
-    "LDD",
-    "ILL",
-    "LDX",
-    "ILL",
-
-    "SUBB",
-    "CMPB",
-    "SBCB",
-    "ADDD",
-    "ADDB",
-    "BITB",
-    "LDB",
-    "STB",
-    "EORB",
-    "ADCB",
-    "ORB",
-    "ADDB",
-    "LDD",
-    "STD",
-    "LDX",
-    "STX",
-
-    "SUBB",
-    "CMPB",
-    "SBCB",
-    "ADDD",
-    "ADDB",
-    "BITB",
-    "LDB",
-    "STB",
-    "EORB",
-    "ADCB",
-    "ORB",
-    "ADDB",
-    "LDD",
-    "STD",
-    "LDX",
-    "STX",
-
-    "SUBB",
-    "CMPB",
-    "SBCB",
-    "ADDD",
-    "ADDB",
-    "BITB",
-    "LDB",
-    "STB",
-    "EORB",
-    "ADCB",
-    "ORB",
-    "ADDB",
-    "LDD",
-    "STD",
-    "LDX",
-    "STX"
+    "SUBB", "CMPB", "SBCB", "ADDD", "ADDB", "BITB", "LDB",  "STBI", "EORB", "ADCB", "ORB",  "ADDB", "LDD",  "STDI", "LDX",  "STXI",
+    "SUBB", "CMPB", "SBCB", "ADDD", "ADDB", "BITB", "LDB",  "STB",  "EORB", "ADCB", "ORB",  "ADDB", "LDD",  "STD",  "LDX",  "STX",
+    "SUBB", "CMPB", "SBCB", "ADDD", "ADDB", "BITB", "LDB",  "STB",  "EORB", "ADCB", "ORB",  "ADDB", "LDD",  "STD",  "LDX",  "STX",
+    "SUBB", "CMPB", "SBCB", "ADDD", "ADDB", "BITB", "LDB",  "STB",  "EORB", "ADCB", "ORB",  "ADDB", "LDD",  "STD",  "LDX",  "STX"
 };
 
 typedef struct
@@ -314,7 +62,7 @@ typedef struct
 
 machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 {
-    {0x00, ILLEGAL_OP     , 0 , 1},
+    {0x00, ADDR_INHERENT  , 2 , 1}, // CLB
     {0x01, ADDR_INHERENT  , 2 , 1}, // NOP
     {0x02, ADDR_INHERENT  , 2 , 1}, // SEXA
     {0x03, ADDR_INHERENT  , 2 , 1}, // SETA
@@ -333,20 +81,20 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
 
     {0x10, ADDR_INHERENT  , 2 , 1}, // SBA
     {0x11, ADDR_INHERENT  , 2 , 1}, // CBA
-    {0x12, ILLEGAL_OP     , 0 , 1},
-    {0x13, ILLEGAL_OP     , 0 , 1},
-    {0x14, ILLEGAL_OP     , 0 , 1},
-    {0x15, ILLEGAL_OP     , 0 , 1},
+    {0x12, ADDR_INHERENT  , 2 , 1}, // SCBA
+    {0x13, ADDR_INHERENT  , 2 , 1}, // SDBA
+    {0x14, ADDR_INHERENT  , 2 , 1}, // TDAB
+    {0x15, ADDR_INHERENT  , 2 , 1}, // TDBA
     {0x16, ADDR_INHERENT  , 2 , 1}, // TAB
     {0x17, ADDR_INHERENT  , 2 , 1}, // TBA
-    {0x18, ILLEGAL_OP     , 0 , 1},
+    {0x18, ADDR_INHERENT  , 2 , 1}, // ABAX
     {0x19, ADDR_INHERENT  , 2 , 1}, // DAA
-    {0x1a, ILLEGAL_OP     , 0 , 1},
+    {0x1a, ADDR_INHERENT  , 2 , 1}, // ABAX
     {0x1b, ADDR_INHERENT  , 2 , 1}, // ABA
-    {0x1c, ILLEGAL_OP     , 0 , 1},
-    {0x1d, ILLEGAL_OP     , 0 , 1},
-    {0x1e, ILLEGAL_OP     , 0 , 1},
-    {0x1f, ILLEGAL_OP     , 0 , 1},
+    {0x1c, ADDR_INHERENT  , 2 , 1}, // TDAB
+    {0x1d, ADDR_INHERENT  , 2 , 1}, // TDBC
+    {0x1e, ADDR_INHERENT  , 2 , 1}, // TAB
+    {0x1f, ADDR_INHERENT  , 2 , 1}, // TBAC
 
     {0x20, ADDR_RELATIVE  , 3 , 2}, // BRA
     {0x21, ADDR_RELATIVE  , 3 , 2}, // BRN
@@ -383,68 +131,68 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
     {0x3f, ADDR_INHERENT  ,12 , 1}, // SWI
 
     {0x40, ADDR_INHERENT  , 2 , 1}, // NEGA
-    {0x41, ILLEGAL_OP     , 0 , 1},
+    {0x41, ADDR_INHERENT  , 2 , 1}, // NGA
     {0x42, ADDR_INHERENT  , 2 , 1}, // NGCA
     {0x43, ADDR_INHERENT  , 2 , 1}, // COMA
     {0x44, ADDR_INHERENT  , 2 , 1}, // LSRA
-    {0x45, ILLEGAL_OP     , 0 , 1},
+    {0x45, ADDR_INHERENT  , 2 , 1}, // LSRA
     {0x46, ADDR_INHERENT  , 2 , 1}, // RORA
     {0x47, ADDR_INHERENT  , 2 , 1}, // ASRA
     {0x48, ADDR_INHERENT  , 2 , 1}, // LSLA
     {0x49, ADDR_INHERENT  , 2 , 1}, // ROLA
     {0x4a, ADDR_INHERENT  , 2 , 1}, // DECA
-    {0x4b, ILLEGAL_OP     , 0 , 1},
+    {0x4b, ADDR_INHERENT  , 2 , 1}, // DCA
     {0x4c, ADDR_INHERENT  , 2 , 1}, // INCA
     {0x4d, ADDR_INHERENT  , 2 , 1}, // TSTA
-    {0x4e, ILLEGAL_OP     , 0 , 1},
+    {0x4e, ILLEGAL_OP     , 0 , 1}, // ILL
     {0x4f, ADDR_INHERENT  , 2 , 1}, // CLRA
 
     {0x50, ADDR_INHERENT  , 2 , 1}, // NEGB
-    {0x51, ILLEGAL_OP     , 0 , 1},
+    {0x51, ADDR_INHERENT  , 2 , 1}, // NGB
     {0x52, ADDR_INHERENT  , 2 , 1}, // NGCB
     {0x53, ADDR_INHERENT  , 2 , 1}, // COMB
     {0x54, ADDR_INHERENT  , 2 , 1}, // LSRB
-    {0x55, ILLEGAL_OP     , 0 , 1},
+    {0x55, ADDR_INHERENT  , 2 , 1}, // LSRB
     {0x56, ADDR_INHERENT  , 2 , 1}, // RORB
     {0x57, ADDR_INHERENT  , 2 , 1}, // ASRB
     {0x58, ADDR_INHERENT  , 2 , 1}, // LSLB
     {0x59, ADDR_INHERENT  , 2 , 1}, // ROLB
     {0x5a, ADDR_INHERENT  , 2 , 1}, // DECB
-    {0x5b, ILLEGAL_OP     , 0 , 1},
+    {0x5b, ADDR_INHERENT  , 2 , 1}, // DCB
     {0x5c, ADDR_INHERENT  , 2 , 1}, // INCB
     {0x5d, ADDR_INHERENT  , 2 , 1}, // TSTB
-    {0x5e, ILLEGAL_OP     , 0 , 1},
+    {0x5e, ILLEGAL_OP     , 0 , 1}, // ILL
     {0x5f, ADDR_INHERENT  , 2 , 1}, // CLRB
 
     {0x60, ADDR_INDEXED   , 6 , 2}, // NEG
-    {0x61, ILLEGAL_OP     , 0 , 1},
+    {0x61, ADDR_INDEXED   , 6 , 2}, // NGX
     {0x62, ADDR_INDEXED   , 6 , 2}, // NGC
     {0x63, ADDR_INDEXED   , 6 , 2}, // COM
     {0x64, ADDR_INDEXED   , 6 , 2}, // LSR
-    {0x65, ADDR_INDEXED   , 6 , 2}, // LSL
+    {0x65, ADDR_INDEXED   , 6 , 2}, // LSRX
     {0x66, ADDR_INDEXED   , 6 , 2}, // ROR
     {0x67, ADDR_INDEXED   , 6 , 2}, // ASR
     {0x68, ADDR_INDEXED   , 6 , 2}, // ASL
     {0x69, ADDR_INDEXED   , 6 , 2}, // ROL
     {0x6a, ADDR_INDEXED   , 6 , 2}, // DEC
-    {0x6b, ILLEGAL_OP     , 0 , 1},
+    {0x6b, ADDR_INDEXED   , 6 , 2}, // DCX
     {0x6c, ADDR_INDEXED   , 6 , 2}, // INC
     {0x6d, ADDR_INDEXED   , 6 , 2}, // TST
     {0x6e, ADDR_INDEXED   , 3 , 2}, // JMP
     {0x6f, ADDR_INDEXED   , 6 , 2}, // CLR
 
     {0x70, ADDR_EXTENDED  , 6 , 3}, // NEG
-    {0x71, ILLEGAL_OP     , 0 , 1},
+    {0x71, ADDR_EXTENDED  , 6 , 3}, // NGX
     {0x72, ADDR_EXTENDED  , 6 , 3}, // NGC
     {0x73, ADDR_EXTENDED  , 6 , 3}, // COM
     {0x74, ADDR_EXTENDED  , 6 , 3}, // LSR
-    {0x75, ILLEGAL_OP     , 0 , 1},
+    {0x75, ADDR_EXTENDED  , 6 , 3}, // LSRX
     {0x76, ADDR_EXTENDED  , 6 , 3}, // ROR
     {0x77, ADDR_EXTENDED  , 6 , 3}, // ASR
     {0x78, ADDR_EXTENDED  , 6 , 3}, // ASL
     {0x79, ADDR_EXTENDED  , 6 , 3}, // ROL
     {0x7a, ADDR_EXTENDED  , 6 , 3}, // DEC
-    {0x7b, ILLEGAL_OP     , 0 , 1},
+    {0x7b, ADDR_EXTENDED  , 6 , 3}, // DCX
     {0x7c, ADDR_EXTENDED  , 6 , 3}, // INC
     {0x7d, ADDR_EXTENDED  , 6 , 3}, // TST
     {0x7e, ADDR_EXTENDED  , 3 , 3}, // JMP
@@ -457,7 +205,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
     {0x84, ADDR_IMMEDIATE , 2 , 2}, // ANDA
     {0x85, ADDR_IMMEDIATE , 2 , 2}, // BITA
     {0x86, ADDR_IMMEDIATE , 2 , 2}, // LDA
-    {0x87, ILLEGAL_OP     , 0 , 1},
+    {0x87, ADDR_IMMEDIATE , 2 , 2}, // STAI
     {0x88, ADDR_IMMEDIATE , 2 , 2}, // EORA
     {0x89, ADDR_IMMEDIATE , 2 , 2}, // ADCA
     {0x8a, ADDR_IMMEDIATE , 2 , 2}, // ORA
@@ -465,7 +213,7 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
     {0x8c, ADDR_LIMMEDIATE, 4 , 3}, // CMPX
     {0x8d, ADDR_RELATIVE  , 6 , 2}, // BSR
     {0x8e, ADDR_LIMMEDIATE, 3 , 3}, // LDS
-    {0x8f, ILLEGAL_OP     , 0 , 1},
+    {0x8f, ADDR_LIMMEDIATE, 3 , 3}, // STSI
 
     {0x90, ADDR_DIRECT    , 3 , 2}, // SUBA
     {0x91, ADDR_DIRECT    , 3 , 2}, // CMPA
@@ -525,15 +273,15 @@ machine_code_t machine_code[256] __attribute__((section(".dtcm"))) =
     {0xc4, ADDR_IMMEDIATE , 2 , 2}, // ADDB
     {0xc5, ADDR_IMMEDIATE , 2 , 2}, // BITB
     {0xc6, ADDR_IMMEDIATE , 2 , 2}, // LDB
-    {0xc7, ILLEGAL_OP     , 0 , 1},
+    {0xc7, ADDR_IMMEDIATE , 2 , 2}, // STBI
     {0xc8, ADDR_IMMEDIATE , 2 , 2}, // EORB
     {0xc9, ADDR_IMMEDIATE , 2 , 2}, // ADCB
     {0xca, ADDR_IMMEDIATE , 2 , 2}, // ORB
     {0xcb, ADDR_IMMEDIATE , 2 , 2}, // ADDB
     {0xcc, ADDR_LIMMEDIATE, 3 , 3}, // LDD
-    {0xcd, ILLEGAL_OP     , 0 , 1},
+    {0xcd, ADDR_LIMMEDIATE, 3 , 3}, // STDI
     {0xce, ADDR_LIMMEDIATE, 3 , 3}, // LDX
-    {0xcf, ILLEGAL_OP     , 0 , 1},
+    {0xcf, ADDR_LIMMEDIATE, 3 , 3}, // STXI
 
     {0xd0, ADDR_DIRECT    , 3 , 2}, // SUBB
     {0xd1, ADDR_DIRECT    , 3 , 2}, // CMPB

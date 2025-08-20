@@ -191,9 +191,9 @@ s16 last_dac     __attribute__((section(".dtcm"))) = 0;
 ITCM_CODE void processDirectAudio(void)
 {
     u8 num_samples = 2;
-    
+
     if (breather) return;
-    
+
     if (catch_up) {catch_up--; num_samples=6;} // Queue nearly empty... catch up
 
     for (u8 i=0; i<num_samples; i++)
@@ -220,7 +220,7 @@ void newStreamSampleRate(void)
 
         // Adjust the sample rate to match the core emulation speed... user can override from 80% to 130%
         int sample_rate = (SAMPLE_RATE_NTSC * sample_rate_adjust[myConfig.gameSpeed]) / 100;
-        
+
         myStream.sampling_rate  = sample_rate;            // sample_rate to match the scanline emulation
         myStream.buffer_length  = buffer_size;            // buffer length = (512+16)
         myStream.callback       = OurSoundMixer;          // set callback function
@@ -352,7 +352,7 @@ ITCM_CODE void DisplayStatusLine(void)
     {
         DSPrint(10, 23, 6, " ");
     }
-    
+
     if (tape_motor == 2)
     {
         // Show cassette in green (playing)
@@ -673,7 +673,7 @@ ITCM_CODE void MicroDS_main(void)
         if (TIMER1_DATA >= 32728)   //  1000MS (1 sec)
         {
             char szChai[4];
-            
+
             read_cassette_counter = 0;
 
             TIMER1_CR = 0;
@@ -754,7 +754,7 @@ ITCM_CODE void MicroDS_main(void)
                 BufferKey(KBD_ENTER); // ENTER
                 BufferKey(255);       // END
             }
-            
+
             // SELECT key is special...
             if (keys_current & KEY_SELECT)
             {
@@ -960,7 +960,7 @@ ITCM_CODE void MicroDS_main(void)
 
 
 // --------------------------------------------------------
-// We can use some of this semi-fast VRAM as a memory swap 
+// We can use some of this semi-fast VRAM as a memory swap
 // --------------------------------------------------------
 void useVRAM(void)
 {
@@ -983,27 +983,27 @@ void MicroDSInit(void)
     videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE  | DISPLAY_BG1_ACTIVE | DISPLAY_SPR_1D_LAYOUT | DISPLAY_SPR_ACTIVE);
     vramSetBankA(VRAM_A_MAIN_BG);
     vramSetBankC(VRAM_C_SUB_BG);
-   
+
     //  Stop blending effect of intro
     REG_BLDCNT=0; REG_BLDCNT_SUB=0; REG_BLDY=0; REG_BLDY_SUB=0;
-   
+
     //  Render the top screen
     bg0 = bgInit(0, BgType_Text8bpp,  BgSize_T_256x512, 31,0);
     bg1 = bgInit(1, BgType_Text8bpp,  BgSize_T_256x512, 29,0);
     bgSetPriority(bg0,1);bgSetPriority(bg1,0);
-   
+
     decompress(splashTiles,  bgGetGfxPtr(bg0), LZ77Vram);
     decompress(splashMap,  (void*) bgGetMapPtr(bg0), LZ77Vram);
     dmaCopy((void*) splashPal,(void*)  BG_PALETTE,256*2);
 
     unsigned  short dmaVal =*(bgGetMapPtr(bg0)+51*32);
     dmaFillWords(dmaVal | (dmaVal<<16),(void*)  bgGetMapPtr(bg1),32*24*2);
-   
+
     // Put up the options screen
     BottomScreenOptions();
-   
+
     //  Find the files
-    MicroDSFindFiles(0);
+    MicroDSFindFiles();
 }
 
 void BottomScreenOptions(void)
@@ -1120,18 +1120,18 @@ void LoadBIOSFiles(void)
     if (!size) size = ReadFileCarefully("mc-10.bin",               MC10BASIC, 0x2000, 0);
     if (!size) size = ReadFileCarefully("/roms/bios/mc-10.bin",    MC10BASIC, 0x2000, 0);
     if (!size) size = ReadFileCarefully("/data/bios/mc-10.bin",    MC10BASIC, 0x2000, 0);
-        
+
     if (size) bBIOS_found = true;
-    
+
     // And the optional MCX BASIC rom file
                size = ReadFileCarefully("mcx.bin",                 MCXBASIC, 0x4000, 0);
     if (!size) size = ReadFileCarefully("/roms/bios/mcx.bin",      MCXBASIC, 0x4000, 0);
     if (!size) size = ReadFileCarefully("/data/bios/mcx.bin",      MCXBASIC, 0x4000, 0);
-    
+
     if (!size) size = ReadFileCarefully("mcx.rom",                 MCXBASIC, 0x4000, 0);
     if (!size) size = ReadFileCarefully("/roms/bios/mcx.rom",      MCXBASIC, 0x4000, 0);
     if (!size) size = ReadFileCarefully("/data/bios/mcx.rom",      MCXBASIC, 0x4000, 0);
-    
+
     if (size) bMCX_found = true;
 }
 
@@ -1142,40 +1142,40 @@ int main(int argc, char **argv)
 {
     //  Init sound
     consoleDemoInit();
-   
+
     if  (!fatInitDefault())
     {
        iprintf("Unable to initialize libfat!\n");
        return -1;
     }
-   
+
     lcdMainOnTop();
-   
+
     //  Init timer for frame management
     TIMER2_DATA=0;
     TIMER2_CR=TIMER_ENABLE|TIMER_DIV_1024;
     dsInstallSoundEmuFIFO();
-   
+
     // -----------------------------------------------------------------
     // And do an initial load of configuration... We'll match it up
     // with the game that was selected later...
     // -----------------------------------------------------------------
     LoadConfig();
-   
+
     //  Show the fade-away intro logo...
     intro_logo();
-   
+
     SetYtrigger(190); //trigger 2 lines before vblank
-   
+
     irqSet(IRQ_VBLANK,  irqVBlank);
     irqEnable(IRQ_VBLANK);
-   
+
     // -----------------------------------------------------------------
     // Grab the BIOS before we try to switch any directories around...
     // -----------------------------------------------------------------
     useVRAM();
     LoadBIOSFiles();
-   
+
     //  Handle command line argument... mostly for TWL++
     if  (argc > 1)
     {
@@ -1199,23 +1199,23 @@ int main(int argc, char **argv)
     else
     {
         cmd_line_file[0]=0; // No file passed on command line...
-   
+
         chdir("/roms");       // Try to start in roms area... doesn't matter if it fails
         chdir("mc10");        // And try to start in the mc10 sub-dir
         chdir("mc-10");       // And try to start in the mc10 sub-dir
     }
-   
+
     SoundPause();
-   
+
     srand(time(NULL));
-   
+
     //  ------------------------------------------------------------
     //  We run this loop forever until game exit is selected...
     //  ------------------------------------------------------------
     while(1)
     {
       MicroDSInit();
-   
+
       // ---------------------------------------------------------------
       // Let the user know what BIOS files were found - the only BIOS
       // that must exist is MC10.ROM or else the show is off...
@@ -1227,7 +1227,7 @@ int main(int argc, char **argv)
           DSPrint(2,14,0," /ROMS/BIOS OR WITH EMULATOR");
           while(1) ;  // We're done... Need a bios to run this emulator
       }
-   
+
       while(1)
       {
         SoundPause();
@@ -1244,13 +1244,13 @@ int main(int argc, char **argv)
         {
             MicroDSChangeOptions();
         }
-   
+
         //  Run Machine
         MicroDSInitCPU();
         MicroDS_main();
       }
     }
-    
+
     return(0);
 }
 

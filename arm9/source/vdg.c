@@ -60,7 +60,7 @@ int resolution[][3] __attribute__((section(".dtcm"))) = {
 
 uint8_t colors[] __attribute__((section(".dtcm"))) = {
         FB_BLACK,
-        
+
         FB_GREEN,
         FB_YELLOW,
         FB_BLUE,
@@ -70,11 +70,11 @@ uint8_t colors[] __attribute__((section(".dtcm"))) = {
         FB_CYAN,
         FB_MAGENTA,
         FB_ORANGE,
-        
+
         ARTIFACT_BLUE,
         ARTIFACT_ORANGE,
         ARTIFACT_GREEN,
-        
+
         FB_DKGRN,
         FB_DKORG,
         FB_LTGRN,
@@ -110,7 +110,7 @@ void vdg_init(void)
 {
     uint8_t buf[4];
     int buffer_index;
-    
+
     /* Default startup mode of the MC-10
      */
     current_vdg_mode = ALPHA_INTERNAL;
@@ -135,7 +135,7 @@ void vdg_init(void)
                 case 0x5: color_translation_32[color][i] = (FB_BLACK<<0)       | (colors[color]<<8) | (FB_BLACK<<16)      | (colors[color]<<24);    break;
                 case 0x6: color_translation_32[color][i] = (FB_BLACK<<0)       | (colors[color]<<8) | (colors[color]<<16) | (FB_BLACK<<24);         break;
                 case 0x7: color_translation_32[color][i] = (FB_BLACK<<0)       | (colors[color]<<8) | (colors[color]<<16) | (colors[color]<<24);    break;
-                
+
                 case 0x8: color_translation_32[color][i] = (colors[color]<<0)  | (FB_BLACK<<8)      | (FB_BLACK<<16)      | (FB_BLACK<<24);         break;
                 case 0x9: color_translation_32[color][i] = (colors[color]<<0)  | (FB_BLACK<<8)      | (FB_BLACK<<16)      | (colors[color]<<24);    break;
                 case 0xA: color_translation_32[color][i] = (colors[color]<<0)  | (FB_BLACK<<8)      | (colors[color]<<16) | (FB_BLACK<<24);         break;
@@ -174,9 +174,9 @@ void vdg_init(void)
     }
 
     // ------------------------------------------------------------------------
-    // Pre-render the high-rez modes. The MC-10 doesn't do proper artifacting 
+    // Pre-render the high-rez modes. The MC-10 doesn't do proper artifacting
     // as it lacks a color burst circuit so we basically render any high-rez
-    // PMODE 4 stuff in monochrome. Given the memory limitations of the VDG, 
+    // PMODE 4 stuff in monochrome. Given the memory limitations of the VDG,
     // almost nothing uses this anyway...
     // ------------------------------------------------------------------------
     for (int pixels_byte=0; pixels_byte<16; pixels_byte++)
@@ -187,7 +187,7 @@ void vdg_init(void)
             buf[buffer_index++] = (pixels_byte & element) ? FB_BUFF : FB_BLACK;
         }
         color_artifact_mono_0[pixels_byte] = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | (buf[0] << 0);
-        
+
         buffer_index = 0;
         for (uint8_t element = 0x08; element != 0; element >>= 1)
         {
@@ -215,7 +215,7 @@ ITCM_CODE void vdg_render(void)
         reduce_framerate_for_tape = 0;
     }
 
-    /* VDG/SAM mode settings
+    /* VDG mode settings
      */
     current_vdg_mode = vdg_get_mode();
 
@@ -281,7 +281,7 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
 
     // If we are running with MCX 'Large Model', the Video memory is in the other bank
     uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
-        
+
     for ( row = 0; row < SCREEN_HEIGHT_CHAR; row++ )
     {
         row_address = row * SCREEN_WIDTH_CHAR + vdg_mem_base;
@@ -291,7 +291,7 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
             for ( col = 0; col < SCREEN_WIDTH_CHAR; col++ )
             {
                 c = screen_memory[(col + row_address) & 0x4fff];
-                
+
                 /* Mode dependent initialization
                  * for text or semigraphics 4:
                  * - Determine foreground and background colors
@@ -356,7 +356,7 @@ ITCM_CODE void vdg_render_semi6(int vdg_mem_base)
     uint32_t    *screen_buffer;
 
     screen_buffer = (uint32_t *)0x06000000;
-    
+
     // If we are running with MCX 'Large Model', the Video memory is in the other bank
     uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
 
@@ -535,7 +535,7 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
         color_set = 4;
     else
         color_set = 0;
-        
+
     if ( mode == GRAPHICS_1C )
     {
         uint16_t *pixRowPtr = (uint16_t *)pixel_row;
@@ -618,7 +618,7 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
     else
     {
         fg_color = colors[DEF_COLOR_CSS_0];
-    }    
+    }
 
     screen_buffer = (uint32_t *) (0x06000000);
 
@@ -645,7 +645,7 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
         {
             pix_char = 0;
             if (bDoubleRez)
-            {                
+            {
                 memcpy(screen_buffer, screen_buffer-64, SCREEN_WIDTH_PIX);
                 screen_buffer += 64;
             }
@@ -662,12 +662,12 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
  * return: Video mode
  *
  */
-ITCM_CODE video_mode_t vdg_get_mode(void)
+video_mode_t vdg_get_mode(void)
 {
     video_mode_t mode = UNDEFINED;
 
     uint8_t control_reg = Memory[0xbfff];
-    
+
     if (control_reg & 0x20) // Graphics Mode (vs Alphanumeric)
     {
         uint8_t graph_mode = 0x00;
@@ -714,7 +714,7 @@ ITCM_CODE video_mode_t vdg_get_mode(void)
             // Character bit.7 selects SEMI_GRAPHICS_4;
         }
     }
-    
+
     return mode;
 }
 

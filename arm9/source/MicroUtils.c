@@ -48,7 +48,7 @@ u32 file_crc __attribute__((section(".dtcm")))  = 0x00000000;  // Our global fil
 u8 option_table=0;
 
 const char szKeyName[MAX_KEY_OPTIONS][18] = {
-  "KEY NONE",   // 0  
+  "KEY NONE",   // 0
   "KEYBOARD A", // 1
   "KEYBOARD B",
   "KEYBOARD C",
@@ -86,7 +86,7 @@ const char szKeyName[MAX_KEY_OPTIONS][18] = {
   "KEYBOARD 8",
   "KEYBOARD 9", // 35
   "KEYBOARD 0",
- 
+
   "KEYBOARD ATSIGN", // 37
   "KEYBOARD COLON",  // 38
   "KEYBOARD SEMI",   // 39
@@ -275,7 +275,7 @@ int Filescmp (const void *c1, const void *c2)
 /*********************************************************************************
  * Find game/program files available - sort them for display.
  ********************************************************************************/
-void MicroDSFindFiles(u8 bDiskOnly)
+void MicroDSFindFiles(void)
 {
   u32 uNbFile;
   DIR *dir;
@@ -329,7 +329,7 @@ void MicroDSFindFiles(u8 bDiskOnly)
 // ----------------------------------------------------------------
 // Let the user select a new game (rom) file and load it up!
 // ----------------------------------------------------------------
-u8 MicroDSLoadFile(u8 bDiskOnly)
+u8 MicroDSLoadFile(void)
 {
   bool bDone=false;
   u16 ucHaut=0x00, ucBas=0x00,ucSHaut=0x00, ucSBas=0x00, romSelected= 0, firstRomDisplay=0,nbRomPerPage, uNbRSPage;
@@ -340,7 +340,7 @@ u8 MicroDSLoadFile(u8 bDiskOnly)
 
   BottomScreenOptions();
 
-  MicroDSFindFiles(bDiskOnly);
+  MicroDSFindFiles();
 
   ucGameChoice = -1;
 
@@ -493,19 +493,14 @@ u8 MicroDSLoadFile(u8 bDiskOnly)
     {
       if (gpFic[ucGameAct].uType != DIRECTORY)
       {
-          u8 isDisk = strcasecmp(strrchr(gpFic[ucGameAct].szName, '.'), ".dsk");
-          u8 isCass = strcasecmp(strrchr(gpFic[ucGameAct].szName, '.'), ".c10");
-          if (!bDiskOnly || (isDisk == 0) || (isCass == 0))
-          {
-              bDone=true;
-              ucGameChoice = ucGameAct;
-              WAITVBL;
-          }
+          bDone=true;
+          ucGameChoice = ucGameAct;
+          WAITVBL;
       }
       else
       {
         chdir(gpFic[ucGameAct].szName);
-        MicroDSFindFiles(bDiskOnly);
+        MicroDSFindFiles();
         ucGameAct = 0;
         nbRomPerPage = (fileCount>=17 ? 17 : fileCount);
         uNbRSPage = (fileCount>=5 ? 5 : fileCount);
@@ -654,6 +649,19 @@ void MapWASD(void)
     myConfig.keymap[9]   = KBD_SHIFT;// NDS L Button mapped to SHIFT
 }
 
+void MapIJKL(void)
+{
+    myConfig.keymap[0]   = KBD_I;    // NDS D-Pad UP    mapped to W
+    myConfig.keymap[1]   = KBD_J;    // NDS D-Pad LEFT  mapped to A
+    myConfig.keymap[2]   = KBD_K;    // NDS D-Pad DOWN  mapped to S
+    myConfig.keymap[3]   = KBD_L;    // NDS D-Pad RIGHT mapped to D
+    myConfig.keymap[4]   = KBD_SPACE;// NDS A Button mapped to SPACE
+    myConfig.keymap[5]   = KBD_ENTER;// NDS B Button mapped to ENTER
+    myConfig.keymap[6]   = KBD_SPACE;// NDS X Button mapped to SPACE
+    myConfig.keymap[7]   = KBD_ENTER;// NDS Y Button mapped to RETURN
+    myConfig.keymap[8]   = KBD_CTRL; // NDS R Button mapped to CTRL
+    myConfig.keymap[9]   = KBD_SHIFT;// NDS L Button mapped to SHIFT
+}
 
 void SetDefaultGlobalConfig(void)
 {
@@ -931,11 +939,12 @@ void DisplayKeymapName(u32 uY)
 u8 keyMapType = 0;
 void SwapKeymap(void)
 {
-    keyMapType = (keyMapType+1) % 2;
+    keyMapType = (keyMapType+1) % 3;
     switch (keyMapType)
     {
         case 0: MapWAZS();     DSPrint(12,23,0,("CURSORS")); break;
         case 1: MapWASD();     DSPrint(12,23,0,(" WASD  ")); break;
+        case 2: MapIJKL();     DSPrint(12,23,0,(" IJKL  ")); break;
     }
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;
     DSPrint(12,23,0,("         "));
@@ -964,7 +973,7 @@ void MicroDSChangeKeymap(void)
   DSPrint(1 ,21,0,("       X : SWAP KEYMAP TYPE  "));
   DSPrint(1 ,22,0,("   START : SAVE KEYMAP       "));
   DisplayKeymapName(ucY);
-  
+
   bIndTch = myConfig.keymap[0];
 
   // -----------------------------------------------------------------------
@@ -1136,7 +1145,7 @@ void NoGameSelected(u32 ucY)
 void ReadFileCRCAndConfig(void)
 {
     keyMapType = 0;
-    
+
     // ----------------------------------------------------------------------------------
     // Clear the entire ROM buffer[] - fill with 0xFF to emulate non-responsive memory
     // ----------------------------------------------------------------------------------
@@ -1154,7 +1163,7 @@ void ReadFileCRCAndConfig(void)
 
     // Grab the all-important file CRC - this also loads the file into TapeBuffer[]
     getfile_crc(gpFic[ucGameChoice].szName);
-    
+
     loadgame(gpFic[ucGameChoice].szName);
 
     FindConfig();    // Try to find keymap and config for this file...
@@ -1269,7 +1278,7 @@ void MicroDSChangeOptions(void)
         ucA = 0x01;
         switch (ucY) {
           case 7 :      // LOAD GAME
-            MicroDSLoadFile(FALSE);
+            MicroDSLoadFile();
             dmaFillWords(dmaVal | (dmaVal<<16),(void*) bgGetMapPtr(bg1b)+5*32*2,32*19*2);
             BottomScreenOptions();
             if (ucGameChoice != -1)
@@ -1513,19 +1522,19 @@ void RunMicroComputer(void)
 // ------------------------------------------------------------------------------------
 // These colors were derived by using other emulators and taking screenshots and then
 // using GIMPs color-picker to try and get as close as possible. At first I was just
-// assigning RGB values that made sense - for example FB_CYAN was 0x00FFFF but in 
-// reality the color names are only approximations of the actual colors rendered by 
+// assigning RGB values that made sense - for example FB_CYAN was 0x00FFFF but in
+// reality the color names are only approximations of the actual colors rendered by
 // the Motorola video chip... these aren't perfect but they will be good enough.
 // ------------------------------------------------------------------------------------
 u8 MC10_palette[16*3] =
 {
   0x00, 0x00, 0x00, // FB_BLACK
-  
+
   0x00, 0xFF, 0x00, // FB_GREEN
   0xFF, 0xFF, 0x83, // FB_YELLOW
   0x1B, 0x16, 0xEB, // FB_BLUE
   0xC0, 0x0E, 0x24, // FB_RED
-  
+
   0xF0, 0xF0, 0xF0, // FB_BUFF (White-ish)
   0x1D, 0x9C, 0x5D, // FB_CYAN (slightly more greenish)
   0xFD, 0x25, 0xFF, // FB_MAGENTA (slightly more purplish)
@@ -1634,7 +1643,7 @@ void intro_logo(void)
   decompress(splashTiles, bgGetGfxPtr(bg1), LZ77Vram);
   decompress(splashMap, (void*) bgGetMapPtr(bg1), LZ77Vram);
   dmaCopy((void *) splashPal,(u16*) BG_PALETTE,256*2);
-      
+
   decompress(splash_botTiles, bgGetGfxPtr(bg1s), LZ77Vram);
   decompress(splash_botMap, (void*) bgGetMapPtr(bg1s), LZ77Vram);
   dmaCopy((void *) splash_botPal,(u16*) BG_PALETTE_SUB,256*2);

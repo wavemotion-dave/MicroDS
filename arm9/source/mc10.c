@@ -38,7 +38,7 @@ u32 last_file_size          __attribute__((section(".dtcm"))) = 0;
 void micro_reset(void)
 {
     micro_line = 0;
-    
+
     // We might need to change the sample rate
     newStreamSampleRate();
 

@@ -157,7 +157,7 @@ typedef enum
   KBD_DASH,
   KBD_PERIOD,
   KBD_SLASH,
-  KBD_ENTER,  
+  KBD_ENTER,
   KBD_SPACE,
   KBD_SHIFT,
   KBD_CTRL,
@@ -168,7 +168,6 @@ extern struct Config_t       myConfig;
 extern struct GlobalConfig_t myGlobalConfig;
 
 extern u32 file_crc;
-extern u8 bFirstTime;
 
 extern u8 BufferedKeys[32];
 extern u8 BufferedKeysWriteIdx;
@@ -182,13 +181,13 @@ extern short int ucGameChoice;
 
 extern void LoadConfig(void);
 extern u8   showMessage(char *szCh1, char *szCh2);
-extern void MicroDSFindFiles(u8 bDiskOnly);
+extern void MicroDSFindFiles(void);
 extern void MicroDSChangeOptions(void);
 extern void MicroDSGameOptions(bool bIsGlobal);
 extern void DSPrint(int iX,int iY,int iScr,char *szMessage);
 extern u32  crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 extern void FadeToColor(unsigned char ucSens, unsigned short ucBG, unsigned char ucScr, unsigned char valEnd, unsigned char uWait);
-extern u8   MicroDSLoadFile(u8 bDiskOnly);
+extern u8   MicroDSLoadFile(void);
 extern void DisplayFileName(void);
 extern u32  ReadFileCarefully(char *filename, u8 *buf, u32 buf_size, u32 buf_offset);
 extern u8   loadgame(const char *path);
