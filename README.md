@@ -116,12 +116,13 @@ Pressing and holding the L/R shoulder buttons plus Y will create a screen snapsh
 
 MCX-128 and MCXBASIC:
 -----------------------
-If you have provided the 16K MCX.BIN external ROM (2.1 from Darren Atkinson released in 2011), you can run in MCX-128 mode. For any game that needs it, go into configuration for that game and select the machine type of "MCX-128".
+MCX-128 emulation is partially supported. If you have provided the 16K MCX.BIN external ROM (2.1 from Darren Atkinson released in 2011), you can run in MCX-128 mode. For any game that needs it, go into configuration for that game and select the machine type of "MCX-128".
 
 ![image](./png/mcx.png)
 
-The more useful menu item here is (1) MCX BASIC which provides the extended BASIC command set with the 32K memory model.  While the (2) MCX BASIC - LARGE model (48K) will work, it runs slowly due to having to swap banks in/out of memory
-and the emulation is not designed for such activities and so the bytes must be moved in large blocks which taxes the emulation on the little DS handheld.
+The more useful menu item here is (1) MCX BASIC which provides the extended BASIC command set with the 32K memory model and is generally well supported by this emulation.  While the (2) MCX BASIC - LARGE model (48K) will work, 
+it only has partial RAM/ROM banking. It has enough to manage the video memory on a separate RAM page and allows the MCX BASIC - LARGE model to manage it... but if a program were to try and utilize more of the banked memory, this
+emulation will not be sufficient. This may be improved someday - but for now, it's enough to get a number of known MCX BASIC games working on the emulator.
 
 Known Issues:
 -----------------------

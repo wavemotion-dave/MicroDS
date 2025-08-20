@@ -280,7 +280,7 @@ ITCM_CODE void vdg_render_alpha_semi4(int vdg_mem_base)
         color_set = FB_GREEN;
 
     // If we are running with MCX 'Large Model', the Video memory is in the other bank
-    uint8_t *screen_memory = (mcx_ram_bank1) ? Memory_MCX : Memory;
+    uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
         
     for ( row = 0; row < SCREEN_HEIGHT_CHAR; row++ )
     {
@@ -356,6 +356,9 @@ ITCM_CODE void vdg_render_semi6(int vdg_mem_base)
     uint32_t    *screen_buffer;
 
     screen_buffer = (uint32_t *)0x06000000;
+    
+    // If we are running with MCX 'Large Model', the Video memory is in the other bank
+    uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
 
     if ( Memory[0xbfff] & PIA_COLOR_SET )
         color_set = DEF_COLOR_CSS_1;
@@ -370,7 +373,7 @@ ITCM_CODE void vdg_render_semi6(int vdg_mem_base)
         {
             for ( col = 0; col < SCREEN_WIDTH_CHAR; col++ )
             {
-                c = Memory[(col + row_address) & 0x4fff];
+                c = screen_memory[(col + row_address) & 0x4fff];
 
                 if (c & 0x80)
                 {
@@ -440,6 +443,9 @@ ITCM_CODE void vdg_render_resl_graph(video_mode_t mode, int vdg_mem_base)
 
     screen_buffer = (uint8_t *) (0x06000000);
 
+    // If we are running with MCX 'Large Model', the Video memory is in the other bank
+    uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
+
     video_mem = resolution[mode][RES_MEM];
     row_rep = resolution[mode][RES_ROW_REP];
     buffer_index = 0;
@@ -455,7 +461,7 @@ ITCM_CODE void vdg_render_resl_graph(video_mode_t mode, int vdg_mem_base)
 
     for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
     {
-        pixels_byte = Memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
+        pixels_byte = screen_memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
 
         if (pixels_byte == 0x00)
         {
@@ -519,6 +525,9 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
 
     screen_buffer = (uint8_t *) (0x06000000);
 
+    // If we are running with MCX 'Large Model', the Video memory is in the other bank
+    uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
+
     video_mem = resolution[mode][RES_MEM];
     row_rep = resolution[mode][RES_ROW_REP];
 
@@ -532,7 +541,7 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
         uint16_t *pixRowPtr = (uint16_t *)pixel_row;
         for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
         {
-            pixels_byte = Memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
+            pixels_byte = screen_memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
 
             *pixRowPtr++ = colors16[((pixels_byte >> 6) & 0x03) | color_set];
             *pixRowPtr++ = colors16[((pixels_byte >> 6) & 0x03) | color_set];
@@ -563,7 +572,7 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
         uint16_t *pixRowPtr = (uint16_t *)pixel_row;
         for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
         {
-            pixels_byte = Memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
+            pixels_byte = screen_memory[(vdg_mem_offset + vdg_mem_base) & 0x4fff];
 
             *pixRowPtr++ = colors16[((pixels_byte >> 6) & 0x03) | color_set];
             *pixRowPtr++ = colors16[((pixels_byte >> 4) & 0x03) | color_set];
@@ -599,6 +608,9 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
     uint32_t   *screen_buffer;
     uint8_t     pix_char = 0;
 
+    // If we are running with MCX 'Large Model', the Video memory is in the other bank
+    uint8_t *screen_memory = (mcx_ram_bank1) ? (Memory_MCX-0x4000) : Memory;
+
     if ( Memory[0xbfff] & PIA_COLOR_SET )
     {
         fg_color = colors[DEF_COLOR_CSS_1];
@@ -615,7 +627,7 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
 
     for ( vdg_mem_offset = 0; vdg_mem_offset < video_mem; vdg_mem_offset++)
     {
-        pixels_byte = Memory[vdg_mem_offset + vdg_mem_base];
+        pixels_byte = screen_memory[vdg_mem_offset + vdg_mem_base];
 
         if (fg_color == FB_GREEN)
         {

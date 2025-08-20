@@ -959,13 +959,13 @@ ITCM_CODE void MicroDS_main(void)
 }
 
 
-// ----------------------------------------------------------------------------------------
-// We steal 256K of the VRAM to hold a shadow copy of the ROM cart for fast swap...
-// ----------------------------------------------------------------------------------------
+// --------------------------------------------------------
+// We can use some of this semi-fast VRAM as a memory swap 
+// --------------------------------------------------------
 void useVRAM(void)
 {
     vramSetBankB(VRAM_B_LCD);        // 128K VRAM used for snapshot DCAP buffer - but could be repurposed during emulation ...
-    vramSetBankD(VRAM_D_LCD);        // Not using this for video but 128K of faster RAM always useful!  Mapped at 0x06860000 -   Used for MCX-128 RAM Emulation
+    vramSetBankD(VRAM_D_LCD);        // Not using this for video but 128K of faster RAM always useful!  Mapped at 0x06860000 -   Unused - reserved for future use
     vramSetBankE(VRAM_E_LCD);        // Not using this for video but 64K of faster RAM always useful!   Mapped at 0x06880000 -   Unused - reserved for future use
     vramSetBankF(VRAM_F_LCD);        // Not using this for video but 16K of faster RAM always useful!   Mapped at 0x06890000 -   Unused - reserved for future use
     vramSetBankG(VRAM_G_LCD);        // Not using this for video but 16K of faster RAM always useful!   Mapped at 0x06894000 -   Unused - reserved for future use

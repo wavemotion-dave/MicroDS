@@ -35,26 +35,25 @@ uint8_t  Memory[MEMORY_SIZE]; // 64K Memory Space for the MC-10
 uint32_t io_start             __attribute__((section(".dtcm"))) = 0x9000; // Can be moved up closer to BFFF to allow for more RAM expansion
 uint8_t  counter_read_latch   __attribute__((section(".dtcm"))) = 0x00;   // Reading the high-byte of the Timer-Counter latches the low byte
 
-uint8_t mcx_ram_bank0         __attribute__((section(".dtcm"))) = 0x00;
-uint8_t mcx_ram_bank1         __attribute__((section(".dtcm"))) = 0x00;
-uint8_t mcx_rom_bank          __attribute__((section(".dtcm"))) = 0x00;
+uint8_t mcx_ram_bank0         __attribute__((section(".dtcm"))) = 0x00;   // For management of MCX RAM banking
+uint8_t mcx_ram_bank1         __attribute__((section(".dtcm"))) = 0x00;   // For management of MCX RAM banking
+uint8_t mcx_rom_bank          __attribute__((section(".dtcm"))) = 0x00;   // For management of MCX ROM banking
 
-uint8_t Memory_MCX[MEMORY_SIZE] = {0};
+uint8_t Memory_MCX[0x1000]    __attribute__((section(".dtcm")));          // Used to manage the 4K video buffer on an alternate MCX page of memory
 
 /*------------------------------------------------
  * mem_init()
  *
- *  Initialize the memory module
+ *  Initialize the memory module. Clear RAM and
+ *  setup the memory boundary based on machine type.
  *
- *  param:  Nothing
- *  return: Nothing
  */
 void mem_init(void)
 {
     for (int addr = 0; addr < MEMORY_SIZE; addr++ )
     {
         Memory[addr] = 0x00;
-        Memory_MCX[addr] = 0x00;
+        Memory_MCX[addr & 0xFFF] = 0x00;
         
         if (addr < 0x100)                    Memory[addr] = 0x00;
         if (addr >= 0x100 && addr < 0x4000)  Memory[addr] = 0xFF;
@@ -67,6 +66,10 @@ void mem_init(void)
     // to the last 256 byte page of memory before the ROM starts.
     // ----------------------------------------------------------
     io_start = (myConfig.machine ? 0xbf00:0x9000);
+    
+    mcx_ram_bank0 = 0x00;
+    mcx_ram_bank1 = 0x00;
+    mcx_rom_bank  = 0x00;
     
     counter_read_latch = 0x00;
 }
@@ -123,6 +126,12 @@ ITCM_CODE uint8_t read_kbd_hi(void)
 {
     uint8_t ret = 0x00;
     
+    // ------------------------------------------------------
+    // For each key that was pressed, we need to run through
+    // the scan algorithm. The MC-10 program will write to 
+    // Memory[2] to set the column(s) they are interested in
+    // scanning and this routine will read out the row bit.
+    // ------------------------------------------------------
     for (int i=0; i<kbd_keys_pressed; i++)
     {
         uint8_t scan_code = (uint8_t) kbd_keys[i];
@@ -205,6 +214,10 @@ ITCM_CODE uint8_t read_kbd_hi(void)
         }
     }
     
+    // -------------------------------------------------------------
+    // The upper two bits aren't used... we return 11 for those
+    // which mirrors the handling found in the MC-10 java emulator.
+    // -------------------------------------------------------------
     return ~ret;
 }
 
@@ -219,17 +232,38 @@ ITCM_CODE uint8_t unmapped_memory_read(int address)
     return (address & 0xFF);
 }
 
+
+// ----------------------------------------------------------------------------
+// This is called whenever unmapped memory is written to. Peripherals such
+// as the MCX might map RAM into these nooks-and-crannies in the MC-10 system.
+// ----------------------------------------------------------------------------
 ITCM_CODE void unmapped_memory_write(int address, int data)
 {
     if (myConfig.machine == MACHINE_MCX)
     {
-         if (address < 0xC000) Memory[address] = data;
+        // -------------------------------------------------
+        // Never allow writes to the ROM area - and we 
+        // don't yet support banking of RAM in this region.
+        // -------------------------------------------------
+        if (address < 0xC000) Memory[address] = data;
     }
 }
 
 
+// -------------------------------------------------------------------------------------------
+// In theory the MC-10 responds to all unmapped addresses between 0x8000 and 0xBFFF but the 
+// convention is for programmers to only use 0xBFFF to allow for future IO mapping (such as
+// can be found in the MCX handling which utilizes two registers for RAM/ROM banking.
+// -------------------------------------------------------------------------------------------
 ITCM_CODE void io_write(int address, int data)
 {
+    // --------------------------------------------------------------------------------------
+    // This is a "poor-man" implementation of MCX banking. We aren't supporting the banking
+    // beyond allowing the video memory to be managed by the MCX 'Large Model' in another
+    // bank. To that end, the MCXBASIC 'Large' model appears to be swapping the middle bank
+    // in order to keep the video memory on the main bank 0 RAM and utilizing bank 1 as the
+    // place for BASIC and related vars... this allows for an almost 48K BASIC memory free.
+    // --------------------------------------------------------------------------------------
     if (myConfig.machine == MACHINE_MCX && (mcx_rom_bank != 2))
     {
         // ---------------------------------------------
@@ -247,7 +281,6 @@ ITCM_CODE void io_write(int address, int data)
                 case 0x00:  // RAM Banking
                     if (mcx_ram_bank0 != (data & 1))
                     {
-                        debug[0]++;
                         mcx_ram_bank0 = (data & 1);
                         // ----------------------------------------------------------------
                         // I have yet to see any real-world MCX program swap bank 0 out... 
@@ -256,27 +289,30 @@ ITCM_CODE void io_write(int address, int data)
                     }
                     if (mcx_ram_bank1 != ((data & 2) >> 1))
                     {
-                        debug[1]++;
                         mcx_ram_bank1 = ((data & 2) >> 1);
                         
-                        // -----------------------------------------------------------
+                        // -----------------------------------------------------------------------------------------------------
                         // Switch-a-roo!
-                        // This is slow... but there are so few programs that take
-                        // advantage of the banked memory that we are willing to 
-                        // do this swap slowly and keep the normal Memory read/write
-                        // routines fast - it's not worth adding banking pointers
-                        // to slow down 99% of software when this works fine for
-                        // the few MCX programs that need the extra memory... So far,
-                        // only the MCX Large Memory Model (48K) utilizes this.
-                        // -----------------------------------------------------------
+                        // There are so few programs that take advantage of the banked memory that we are willing to do this
+                        // swap slowly and keep the normal Memory read/write routines fast - it's not worth adding banking 
+                        // pointers to slow down 99% of software when this works fine for the few MCX programs that need the
+                        // extra memory... So far, only the MCX Large Memory Model (48K) utilizes this banking.
+                        //
+                        // For now we are only swapping 4K of this bank - that's the video memory (4K) at main memory 0x4000.
+                        // That's all that is needed to get the MCX BASIC 'Large' model to run properly. If a program tries 
+                        // to utilize more memory than the 48K in the secondary bank plus the 4K Video in the primary bank, 
+                        // this emulation won't handle it. If and when the time comes for MCX BASIC games to utilize lots of
+                        // the swappable RAM, we will adjust (but it's unlikely as the latest MCX board is only 32K in RAM.
+                        // -----------------------------------------------------------------------------------------------------
                         uint32_t tmp;
                         uint32_t *s32 = (uint32_t *)(Memory+0x4000);
-                        uint32_t *d32 = (uint32_t *)(Memory_MCX+0x4000);
-                        for (int i=0; i<(8192-64); i++) // Not the last 256 bytes... where the IO lives
+                        uint32_t *d32 = (uint32_t *)(Memory_MCX);
+                        for (int i=0; i<256; i++) // Copy the 4K Video Memory from 'dtcm' fast memory 16 bytes at a time
                         {
-                            tmp = *s32;
-                            *s32++ = *d32;
-                            *d32++ = tmp;
+                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
+                            tmp = *s32;  *s32++ = *d32;  *d32++ = tmp;
                         }
                     }
                     break;
@@ -284,9 +320,12 @@ ITCM_CODE void io_write(int address, int data)
                 case 0x01:  // ROM Banking
                     if (mcx_rom_bank != (data & 3))
                     {
-                        debug[2]++;
                         mcx_rom_bank = (data & 3);
-                        
+                
+                        // ---------------------------------------------------------------
+                        // The only ROM banking we are supporting is switching in of the 
+                        // stock 8K MICROBASIC which is option [0] on the MCX main menu. 
+                        // ---------------------------------------------------------------
                         if (mcx_rom_bank == 2)
                         {
                             mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC
@@ -370,6 +409,10 @@ ITCM_CODE void cpu_reg_write(int address, int data)
     }    
 }
 
+// --------------------------------------------------------------------------
+// The main things this needs to handle is the keyboard Shift/Control/Break
+// reading plus the Cassette input bit and the Timer/Counter read-back.
+// --------------------------------------------------------------------------
 ITCM_CODE uint8_t cpu_reg_read(int address)
 {
     if (address > 0x1f) return unmapped_memory_read(address); // Possibly floating bus
@@ -398,7 +441,7 @@ ITCM_CODE uint8_t cpu_reg_read(int address)
 /*------------------------------------------------
  * mem_load_rom()
  *
- *  Load a memory range from a data buffer.
+ *  Load a ROM buffer into main Memory[]
  *
  *  param:  Memory address start, source data buffer and
  *          number of data elements to load

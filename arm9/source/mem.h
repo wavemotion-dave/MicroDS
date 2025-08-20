@@ -20,11 +20,13 @@
 extern unsigned int debug[];
 
 extern uint8_t  Memory[MEMORY_SIZE];      // 64K RAM for main memory
-extern uint8_t  Memory_MCX[MEMORY_SIZE];  // 64K RAM for MCX RAM page 1
+extern uint8_t  Memory_MCX[0x1000];       //  4K RAM for MCX video memory paging
 extern uint8_t  counter_read_latch;
 extern uint8_t  mcx_ram_bank0;
 extern uint8_t  mcx_ram_bank1;
 extern uint8_t  mcx_rom_bank;
+extern uint32_t io_start;
+extern uint8_t  cpu_timer_control;
 
 // These are for Register at Memory[8]
 #define TCSR_OLVL   0x01  // Output Level
@@ -37,23 +39,15 @@ extern uint8_t  mcx_rom_bank;
 #define TCSR_ICF    0x80  // Input Capture Flag
 
 
-/********************************************************************
- *  Memory module API
- */
-
-void mem_init(void);
-
-void mem_load_rom(int addr_start, const uint8_t *buffer, int length);
-void cpu_reg_write(int address, int data);
-uint8_t cpu_reg_read(int address);
-uint8_t read_kbd_lo(void);
-uint8_t read_kbd_hi(void);
-uint8_t unmapped_memory_read(int address);
-void unmapped_memory_write(int address, int data);
-void io_write(int address, int data);
-
-extern uint32_t io_start;
-extern uint8_t  cpu_timer_control;
+extern void     mem_init(void);
+extern void     mem_load_rom(int addr_start, const uint8_t *buffer, int length);
+extern void     cpu_reg_write(int address, int data);
+extern uint8_t  cpu_reg_read(int address);
+extern uint8_t  read_kbd_lo(void);
+extern uint8_t  read_kbd_hi(void);
+extern uint8_t  unmapped_memory_read(int address);
+extern void     unmapped_memory_write(int address, int data);
+extern void     io_write(int address, int data);
 
 // For when we know it's a PC read and won't be registers...
 #define mem_read_pc(addr) (Memory[addr])
@@ -74,7 +68,7 @@ inline __attribute__((always_inline)) uint8_t mem_read(int address)
         else if (address > 0x100 && address < 0x4000) return unmapped_memory_read(address); // Unmapped region returns floating bus address 
         return Memory[address];
     }
-    else
+    else // Within the first 128 bytes, we're in the CPU register area
     {
         return cpu_reg_read(address);
     }
@@ -89,11 +83,11 @@ inline __attribute__((always_inline)) uint8_t mem_read(int address)
  *  param:  Memory address and data to write
  *  return: Nothing
  */
-
 inline __attribute__((always_inline)) void mem_write(int address, int data)
 {
     if (address & 0xFF80)
     {
+         // The starting IO address is different depending on the memory model
          if (address >= io_start && address <= 0xbfff)
          {
              io_write(address, data);
