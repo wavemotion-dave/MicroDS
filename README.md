@@ -91,7 +91,6 @@ You can press the START button to automatically issue the load command once you'
 
 ![image](./png/emuscreen.png)
 
-
 Configuration Options :
 -----------------------
 MicroDS includes global options (applied to the emulator as a whole and all games) and game-specific options (applied to just the one game file that was loaded).
@@ -108,7 +107,7 @@ The SELECT key is special - it issues the RUN command to MICROBASIC to save typi
 Keyboards :
 -----------------------
 The emulator supports a virtual touch-screen version of the MC-10 keyboard. Note that due to the limitations of the DS touch-screen where only one key can be
-pressed at a time, the SHIFT key works like a temporary toggle. Press it and then the next key you press will be SHIFT-ed.
+pressed at a time, the SHIFT and CONTROL keys works like a temporary toggle. Press it and then the next key you press will be SHIFT-ed or CONTROL-ed.
 
 ![image](./png/kbd.png)
 
