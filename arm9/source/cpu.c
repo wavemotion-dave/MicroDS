@@ -23,11 +23,11 @@
 #include    "mem.h"
 #include    "cpu.h"
 
-#define CPU_CYCLES_PER_LINE             57
-
 /* -----------------------------------------
    Local definitions
 ----------------------------------------- */
+
+#define CPU_CYCLES_PER_LINE             57
 
 /* MC6803 vector addresses, where
  * each vector is two bytes long.
@@ -133,7 +133,7 @@ struct cc_t
     uint8_t h;
 } cc __attribute__((section(".dtcm")));
 
-int cycles_this_scanline    __attribute__((section(".dtcm"))) = 0;
+int cpu_cycle_deficit    __attribute__((section(".dtcm"))) = 0;
 
 /*------------------------------------------------
  * cpu_init()
@@ -182,7 +182,7 @@ void cpu_check_reset(void)
 {
     if ( cpu.reset_asserted )
     {
-        cycles_this_scanline = 0;
+        cpu_cycle_deficit = 0;
         cc.i = CC_FLAG_SET;
         cpu.cpu_state = CPU_RESET;
         cpu.pc = (mem_read(VEC_RESET) << 8) + mem_read(VEC_RESET+1);
@@ -208,6 +208,8 @@ ITCM_CODE void cpu_run(void)
     uint16_t    operand16;
     int         op_code;
 
+    int cycles_this_scanline = cpu_cycle_deficit;
+    
     while (1)
     {
         if (cpu.cpu_state) // Something OTHER than CPU_EXEC - might be CPU halted (WAI instruction) or a CPU Exception
@@ -1315,15 +1317,14 @@ ITCM_CODE void cpu_run(void)
                 default:
                     /* Exception: Illegal op-code cpu_run()
                      */
-                    if (debug[7] == 0) {debug[7] = op_code;}
-                    //cpu.cpu_state = CPU_EXCEPTION;
+                    cpu.cpu_state = CPU_EXCEPTION;
 
             }
         }
 
         if (cycles_this_scanline >= CPU_CYCLES_PER_LINE)
         {
-            cycles_this_scanline -= CPU_CYCLES_PER_LINE;
+            cpu_cycle_deficit = (cycles_this_scanline - CPU_CYCLES_PER_LINE);
             break;
         }
     }
@@ -1610,24 +1611,25 @@ inline __attribute__((always_inline)) void daa(void)
     uint16_t    high_nibble;
     uint16_t    low_nibble;
 
-    temp = cpu.ab.ab.a;
-    high_nibble = temp & 0xf0;
-    low_nibble = temp & 0x0f;
+    temp = 0;
+    high_nibble = cpu.ab.ab.a & 0xf0;
+    low_nibble = cpu.ab.ab.a & 0x0f;
 
     if ( low_nibble > 0x09 || cc.h )
-        temp += 0x06;
+        temp |= 0x06;
 
     if ( high_nibble > 0x80 && low_nibble > 0x09 )
-        temp += 0x60;
+        temp |= 0x60;
     else if (high_nibble > 0x90 || cc.c)
-        temp += 0x60;
+        temp |= 0x60;
 
-    cpu.ab.ab.a = temp;
-
-    eval_cc_c(temp);
-    eval_cc_z(temp);
-    eval_cc_n(temp);
-    cc.v = CC_FLAG_CLR;
+    uint8_t origH = cc.h;
+    uint8_t origC = cc.c;
+    
+    cpu.ab.ab.a = add(cpu.ab.ab.a, temp);
+    
+    cc.h = origH;
+    cc.c |= origC;
 }
 
 /*------------------------------------------------
@@ -1650,6 +1652,14 @@ inline __attribute__((always_inline)) uint8_t dec(uint8_t byte)
     return (uint8_t) result;
 }
 
+
+/*------------------------------------------------
+ * decc()
+ *
+ *  Decrement affect Carry
+ *
+ *  byte = byte - 1
+ */
 __attribute__((noinline)) uint8_t decc(uint8_t byte)
 {
     uint16_t result;

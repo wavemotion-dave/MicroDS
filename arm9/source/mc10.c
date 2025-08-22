@@ -91,7 +91,7 @@ ITCM_CODE u32 micro_run(void)
     {
         vdg_render();               // Draw the frame
         micro_line = 0;             // Back to the top
-        cycles_this_scanline = 0;   // Reset cycles per line
+        cpu_cycle_deficit = 0;   // Reset cycles per line
         return 1;                   // End of frame
     }
 

@@ -25,8 +25,7 @@ void vdg_render_alpha_semi4(int vdg_mem_base);
 void vdg_render_semi6(int vdg_mem_base);
 void vdg_render_resl_graph(video_mode_t mode, int vdg_mem_base);
 void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base);
-void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base);
-void vdg_render_artifacting_green(video_mode_t mode, int vdg_mem_base);
+void vdg_render_highresolution(video_mode_t mode, int vdg_mem_base);
 
 video_mode_t vdg_get_mode(void);
 
@@ -247,7 +246,7 @@ ITCM_CODE void vdg_render(void)
             break;
 
         case GRAPHICS_6R:
-            vdg_render_artifacting_mono(current_vdg_mode, vdg_mem_base);
+            vdg_render_highresolution(current_vdg_mode, vdg_mem_base);
             break;
 
         default:
@@ -600,7 +599,7 @@ ITCM_CODE void vdg_render_color_graph(video_mode_t mode, int vdg_mem_base)
 // Therefore, we just output this as pure mono (White/Black or Green/Black)
 // No need to get fancy, virtually nothing on the MC-10 uses this anyway.
 // ------------------------------------------------------------------------
-ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
+ITCM_CODE void vdg_render_highresolution(video_mode_t mode, int vdg_mem_base)
 {
     int         vdg_mem_offset;
     int         video_mem;
@@ -662,7 +661,7 @@ ITCM_CODE void vdg_render_artifacting_mono(video_mode_t mode, int vdg_mem_base)
  * return: Video mode
  *
  */
-video_mode_t vdg_get_mode(void)
+ITCM_CODE video_mode_t vdg_get_mode(void)
 {
     video_mode_t mode = UNDEFINED;
 

@@ -55,7 +55,7 @@ typedef struct
 
 extern cpu_state_t cpu;
 
-extern int cycles_this_scanline;
+extern int cpu_cycle_deficit;
 
 /********************************************************************
  *  CPU module API

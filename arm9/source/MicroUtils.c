@@ -41,8 +41,6 @@ struct Config_t         AllConfigs[MAX_CONFIGS];
 struct Config_t         myConfig __attribute((aligned(4))) __attribute__((section(".dtcm")));
 struct GlobalConfig_t   myGlobalConfig;
 
-u16 *pVidFlipBuf  = (u16*) (0x06000000);    // Video flipping buffer
-
 u32 file_crc __attribute__((section(".dtcm")))  = 0x00000000;  // Our global file CRC32 to uniquiely identify this game
 
 u8 option_table=0;
@@ -942,12 +940,12 @@ void SwapKeymap(void)
     keyMapType = (keyMapType+1) % 3;
     switch (keyMapType)
     {
-        case 0: MapWAZS();     DSPrint(12,23,0,("CURSORS")); break;
-        case 1: MapWASD();     DSPrint(12,23,0,(" WASD  ")); break;
-        case 2: MapIJKL();     DSPrint(12,23,0,(" IJKL  ")); break;
+        case 0: MapWAZS();     DSPrint(12,23,0,("ARROWS")); break;
+        case 1: MapWASD();     DSPrint(12,23,0,(" WASD ")); break;
+        case 2: MapIJKL();     DSPrint(12,23,0,(" IJKL ")); break;
     }
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;
-    DSPrint(12,23,0,("         "));
+    DSPrint(12,23,0,("        "));
 }
 
 
@@ -1150,10 +1148,6 @@ void ReadFileCRCAndConfig(void)
     // Clear the entire ROM buffer[] - fill with 0xFF to emulate non-responsive memory
     // ----------------------------------------------------------------------------------
     memset(TapeBuffer, 0xFF, MAX_FILE_SIZE);
-
-    // Determine the file type based on the filename extension
-    if (strstr(gpFic[ucGameChoice].szName, ".c10") != 0) micro_mode = MODE_CAS;
-    if (strstr(gpFic[ucGameChoice].szName, ".C10") != 0) micro_mode = MODE_CAS;
 
     // Save the initial filename and file - we need it for save/restore of state
     strcpy(initial_file, gpFic[ucGameChoice].szName);
@@ -1499,7 +1493,7 @@ u8 MC10Init(char *szGame)
   for (uBcl=0;uBcl<192;uBcl++)
   {
      uVide=(uBcl/12);
-     dmaFillWords(uVide | (uVide<<16),pVidFlipBuf+uBcl*128,256);
+     dmaFillWords(uVide | (uVide<<16),((u16*) (0x06000000))+uBcl*128,256);
   }
 
   RetFct = loadgame(szGame);      // Load up the .c10 game

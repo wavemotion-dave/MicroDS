@@ -49,7 +49,7 @@ u32 DY = 0;
 u8 MC10BASIC[0x2000]          = {0};  // We keep the Tandy MC-10 BASIC/BIOS here (8K ROM)
 u8 MCXBASIC[0x4000]           = {0};  // We keep the homebrew MCXBASIC here (16K ROM)
 
-u8 TapeBuffer[MAX_FILE_SIZE];     // This is where we keep the raw untouched file as read from the SD card
+u8 TapeBuffer[MAX_FILE_SIZE];     // This is where we keep the raw untouched tape file as read from the SD card
 
 // ----------------------------------------------------------------------------
 // We track the most recent directory and file loaded... both the initial one
@@ -1223,7 +1223,7 @@ int main(int argc, char **argv)
       if (!bBIOS_found)
       {
           DSPrint(2,10,0," ERROR: MC10.ROM BASIC/BIOS ");
-          DSPrint(2,12,0," NOT FOUND. PLACE THESE IN  ");
+          DSPrint(2,12,0," NOT FOUND. PLACE BASIC IN  ");
           DSPrint(2,14,0," /ROMS/BIOS OR WITH EMULATOR");
           while(1) ;  // We're done... Need a bios to run this emulator
       }

@@ -30,11 +30,6 @@ extern u32 DX, DY;
 
 #define MAX_KEY_OPTIONS     49
 
-// What format is the input file?
-#define MODE_CART           1
-#define MODE_CAS            2
-#define MODE_DSK            3
-
 #define WAITVBL swiWaitForVBlank(); swiWaitForVBlank(); swiWaitForVBlank(); swiWaitForVBlank(); swiWaitForVBlank();
 
 extern u8 micro_mode;
@@ -48,7 +43,6 @@ extern char initial_path[];
 extern u16 nds_key;
 extern u8  kbd_key;
 extern u16 vusCptVBL;
-extern u16 *pVidFlipBuf;
 extern u16 keyCoresp[MAX_KEY_OPTIONS];
 extern u16 NDS_keyMap[];
 extern u8 soundEmuPause;
