@@ -24,6 +24,7 @@
 #include "MicroDS.h"
 #include "MicroUtils.h"
 #include "mc10_kbd.h"
+#include "alice_kbd.h"
 #include "debug_kbd.h"
 #include "cassette.h"
 #include "splash.h"
@@ -48,6 +49,7 @@ u32 DY = 0;
 
 u8 MC10BASIC[0x2000]          = {0};  // We keep the Tandy MC-10 BASIC/BIOS here (8K ROM)
 u8 MCXBASIC[0x4000]           = {0};  // We keep the homebrew MCXBASIC here (16K ROM)
+u8 ALICE4K[0x2000]            = {0};  // We keep the Alice4K BASIC/BIOS here (8K ROM)
 
 u8 TapeBuffer[MAX_FILE_SIZE];     // This is where we keep the raw untouched tape file as read from the SD card
 
@@ -78,6 +80,7 @@ u16 timingFrames    __attribute__((section(".dtcm"))) = 0;
 // ----------------------------------------------------------------------------------
 u8 bBIOS_found      = false;
 u8 bMCX_found       = false;
+u8 bALICE_found     = false;
 
 u8 soundEmuPause     __attribute__((section(".dtcm"))) = 1;       // Set to 1 to pause (mute) sound, 0 is sound unmuted (sound channels active)
 
@@ -392,6 +395,8 @@ void MiniMenuShow(bool bClearScreen, u8 sel)
     DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " LOAD   STATE  ");  mini_menu_items++;
     DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " GAME   OPTIONS");  mini_menu_items++;
     DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " DEFINE KEYS   ");  mini_menu_items++;
+    DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " TAPE   REWIND ");  mini_menu_items++;
+    DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " TAPE   STOP   ");  mini_menu_items++;
     DSPrint(8,9+mini_menu_items,(sel==mini_menu_items)?2:0,  " EXIT   MENU   ");  mini_menu_items++;
 }
 
@@ -431,7 +436,9 @@ u8 MiniMenu(void)
                 else if (menuSelection == 3) retVal = MENU_CHOICE_LOAD_GAME;
                 else if (menuSelection == 4) retVal = MENU_CHOICE_GAME_OPTION;
                 else if (menuSelection == 5) retVal = MENU_CHOICE_DEFINE_KEYS;
-                else if (menuSelection == 6) retVal = MENU_CHOICE_NONE;
+                else if (menuSelection == 6) retVal = MENU_CHOICE_TAPE_REWIND;
+                else if (menuSelection == 7) retVal = MENU_CHOICE_TAPE_STOP;
+                else if (menuSelection == 8) retVal = MENU_CHOICE_NONE;
                 else retVal = MENU_CHOICE_NONE;
                 break;
             }
@@ -603,6 +610,16 @@ u8 __attribute__((noinline)) handle_meta_key(u8 meta_key)
             MicroDSGameOptions(0);
             BottomScreenKeyboard();
             SoundUnPause();
+            break;
+        
+        case MENU_CHOICE_TAPE_STOP:
+            tape_stop();
+            BottomScreenKeyboard();
+            break;
+
+        case MENU_CHOICE_TAPE_REWIND:
+            tape_rewind();
+            BottomScreenKeyboard();
             break;
     }
 
@@ -1049,6 +1066,13 @@ void BottomScreenKeyboard(void)
         dmaCopy((void*) bgGetMapPtr(bg0b)+32*30*2,(void*) bgGetMapPtr(bg1b),32*24*2);
         dmaCopy((void*) debug_kbdPal,(void*) BG_PALETTE_SUB,256*2);
     }
+    else if (myConfig.machine == MACHINE_ALICE)
+    {
+        decompress(alice_kbdTiles, bgGetGfxPtr(bg0b),  LZ77Vram);
+        decompress(alice_kbdMap, (void*) bgGetMapPtr(bg0b),  LZ77Vram);
+        dmaCopy((void*) bgGetMapPtr(bg0b)+32*30*2,(void*) bgGetMapPtr(bg1b),32*24*2);
+        dmaCopy((void*) alice_kbdPal,(void*) BG_PALETTE_SUB,256*2);
+    }
     else
     {
         decompress(mc10_kbdTiles, bgGetGfxPtr(bg0b),  LZ77Vram);
@@ -1098,9 +1122,11 @@ void LoadBIOSFiles(void)
     // -----------------------------------------------------
     bBIOS_found = false;
     bMCX_found = false;
+    bALICE_found = false;
 
     memset(MC10BASIC,   0xFF, sizeof(MC10BASIC));
     memset(MCXBASIC,    0xFF, sizeof(MCXBASIC));
+    memset(ALICE4K,     0xFF, sizeof(ALICE4K));
 
     // ----------------------------------------------------
     // Try to load the MC-10 BIOS/BASIC file
@@ -1133,6 +1159,17 @@ void LoadBIOSFiles(void)
     if (!size) size = ReadFileCarefully("/data/bios/mcx.rom",      MCXBASIC, 0x4000, 0);
 
     if (size) bMCX_found = true;
+
+    // And the optional ALICE4K rom file
+               size = ReadFileCarefully("alice4k.rom",             ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/roms/bios/alice4k.rom",  ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/data/bios/alice4k.rom",  ALICE4K, 0x2000, 0);
+
+    if (!size) size = ReadFileCarefully("alice.rom",               ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/roms/bios/alice.rom",    ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/data/bios/alice.rom",    ALICE4K, 0x2000, 0);
+
+    if (size) bALICE_found = true;
 }
 
 /************************************************************************************

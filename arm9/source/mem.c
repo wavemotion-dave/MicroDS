@@ -135,7 +135,7 @@ ITCM_CODE uint8_t read_kbd_hi(void)
     for (int i=0; i<kbd_keys_pressed; i++)
     {
         uint8_t scan_code = (uint8_t) kbd_keys[i];
-
+        
         if ((Memory[2] & 0x01) == 0)
         {
             if (scan_code == KBD_ATSIGN)ret |= 0x01;

@@ -54,6 +54,11 @@ void micro_reset(void)
     {
         mem_load_rom(0xc000, MCXBASIC, sizeof(MCXBASIC));   // MCX ROM takes up all 16K
     }
+    else if ((myConfig.machine == MACHINE_ALICE) && bALICE_found)
+    {
+        mem_load_rom(0xc000, ALICE4K, sizeof(ALICE4K)); // Mirror of 8K BASIC
+        mem_load_rom(0xe000, ALICE4K, sizeof(ALICE4K)); // ROM normally runs here
+    }
     else
     {
         mem_load_rom(0xc000, MC10BASIC, sizeof(MC10BASIC)); // Mirror of 8K BASIC

@@ -43,6 +43,8 @@ uint8_t tape_guess_type(void)
 {
     int printable_chars = 0;
 
+    u32 compare_size = last_file_size;
+    
     for (int i=0; i < last_file_size; i++)
     {
         char c = toupper(TapeBuffer[i]);
@@ -53,10 +55,14 @@ uint8_t tape_guess_type(void)
                 printable_chars++;
             }
         }
+        else
+        {
+            compare_size--; // We don't use 0x55 chars in our compare
+        }    
     }
 
     // If more than a third are printable... assume normal BASIC program
-    if (printable_chars > (last_file_size / 3)) return AUTOLOAD_CLOAD;
+    if (printable_chars > (compare_size / 3)) return AUTOLOAD_CLOAD;
     else return AUTOLOAD_CLOADM;
 }
 
@@ -84,6 +90,25 @@ inline uint8_t tape_file_read(void)
 
     // Return the next tape byte from the file
     return TapeBuffer[tape_pos++];
+}
+
+// ----------------------------------------------------
+// Tape can be manually stopped via the mini-menu
+// ----------------------------------------------------
+void tape_stop(void)
+{
+    tape_motor = 0;
+    tape_speedup = 0;
+}
+
+// ----------------------------------------------------
+// Tape can be manually rewound via the mini-menu
+// ----------------------------------------------------
+void tape_rewind(void)
+{
+    tape_motor = 0;
+    tape_speedup = 0;
+    tape_pos = 0;
 }
 
 // ----------------------------------------------------

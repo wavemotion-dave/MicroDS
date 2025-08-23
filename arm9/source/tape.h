@@ -26,6 +26,8 @@ extern uint32_t read_cassette_counter;
 
 extern void    tape_init(void);
 extern uint8_t tape_read(void);
+extern void    tape_stop(void);
+extern void    tape_rewind(void);
 extern uint8_t tape_guess_type(void);
 
 #endif  /* __TAPE_H__ */

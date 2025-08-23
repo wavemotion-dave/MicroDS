@@ -310,6 +310,15 @@ void MicroDSFindFiles(void)
           uNbFile++;
           fileCount++;
         }
+        if ( (strcasecmp(strrchr(szFile, '.'), ".k7") == 0) )  {
+          if (bALICE_found)
+          {
+              strcpy(gpFic[uNbFile].szName,szFile);
+              gpFic[uNbFile].uType = MICRO_FILE;
+              uNbFile++;
+              fileCount++;
+          }
+        }
       }
     }
   }
@@ -697,6 +706,11 @@ void SetDefaultGameConfig(void)
     {
         initial_file[i] = toupper(initial_file[i]);
     }
+    
+    if ( (strcasecmp(strrchr(initial_file, '.'), ".k7") == 0) )
+    {
+        myConfig.machine = MACHINE_ALICE; // Must be Alice 4K
+    }
 }
 
 // ----------------------------------------------------------
@@ -772,7 +786,7 @@ const struct options_t Option_Table[2][20] =
 {
     // Game Specific Configuration
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128"},            &myConfig.machine,           3},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE 4K"},&myConfig.machine,           4},
         {"AUTO LOAD",      {"NO", "CLOAD [RUN]", "CLOADM [EXEC]"},                     &myConfig.autoLoad,          3},
         {"GAME SPEED",     {"100%", "110%", "120%", "130%", "90%", "80%"},             &myConfig.gameSpeed,         6},
         {"NDS D-PAD",      {"NORMAL", "SLIDE-N-GLIDE", "DIAGONALS"},                   &myConfig.dpad,              3},
@@ -780,7 +794,7 @@ const struct options_t Option_Table[2][20] =
     },
     // Global Options
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128"},            &myGlobalConfig.defMachine,  3},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE 4K"},&myGlobalConfig.defMachine,  4},
         {"FPS",            {"OFF", "ON", "ON FULLSPEED"},                              &myGlobalConfig.showFPS,     3},
         {"DEBUGGER",       {"OFF", "ON"},                                              &myGlobalConfig.debugger,    2},
         {NULL,             {"",      ""},                                              NULL,                        1},
@@ -1417,6 +1431,16 @@ u8 BufferedKeysWriteIdx=0;
 u8 BufferedKeysReadIdx=0;
 void BufferKey(u8 key)
 {
+    if (myConfig.machine == MACHINE_ALICE)
+    {
+             if (key == KBD_A)     key = KBD_Q;
+        else if (key == KBD_Q)     key = KBD_A;
+        else if (key == KBD_Z)     key = KBD_W;
+        else if (key == KBD_W)     key = KBD_Z;
+        else if (key == KBD_SEMI)  key = KBD_M;
+        else if (key == KBD_M)     key = KBD_SEMI;
+    }
+    
     BufferedKeys[BufferedKeysWriteIdx] = key;
     BufferedKeysWriteIdx = (BufferedKeysWriteIdx+1) % 32;
 }
@@ -1456,7 +1480,11 @@ void ProcessBufferedKeys(void)
     }
 
     // See if the shift key should be virtually pressed along with this buffered key...
-    if (buf_held) {kbd_key = buf_held; kbd_keys[kbd_keys_pressed++] = buf_held;}
+    if (buf_held)
+    {
+        kbd_key = buf_held; 
+        kbd_keys[kbd_keys_pressed++] = buf_held;
+    }
 }
 
 

@@ -70,7 +70,7 @@ SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 PNGFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
 
-OSPECIALS :=  cassette.o mainmenu.o splash.o mc10_kbd.o splash_bot.o debug_kbd.o
+OSPECIALS :=  cassette.o mainmenu.o splash.o mc10_kbd.o alice_kbd.o splash_bot.o debug_kbd.o
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -142,6 +142,9 @@ mainmenu.s mainmenu.h : mainmenu.png
 	grit $^ -o $@  -gt -mrt -mR8 -mLs -gzl -mzl
 
 mc10_kbd.s mc10_kbd.h : mc10_kbd.png
+	grit $^ -o $@  -gt -mrt -mR8 -mLs -gzl -mzl
+
+alice_kbd.s alice_kbd.h : alice_kbd.png
 	grit $^ -o $@  -gt -mrt -mR8 -mLs -gzl -mzl
 
 debug_kbd.s debug_kbd.h : debug_kbd.png

@@ -28,7 +28,7 @@
 
 #include "lzav.h"
 
-#define MICRO_SAVE_VER   0x0003     // Change this if the basic format of the .SAV file changes. Invalidates older .sav files.
+#define MICRO_SAVE_VER   0x0004     // Change this if the basic format of the .SAV file changes. Invalidates older .sav files.
 
 u8 CompressBuffer[128*1024];
 
@@ -51,12 +51,22 @@ void MicroSaveState()
   sprintf(szLoadFile,"sav/%s", initial_file);
 
   int len = strlen(szLoadFile);
-  szLoadFile[len-3] = 's';
-  szLoadFile[len-2] = 'a';
-  szLoadFile[len-1] = 'v';
+  if (szLoadFile[len-3] == '.') // k7 file most likely
+  {
+      szLoadFile[len-2] = 's';
+      szLoadFile[len-1] = 'a';
+      szLoadFile[len-0] = 'v';
+      szLoadFile[len+1] = 0;
+  }
+  else
+  {
+      szLoadFile[len-3] = 's';
+      szLoadFile[len-2] = 'a';
+      szLoadFile[len-1] = 'v';
+  }
 
   strcpy(tmpStr,"SAVING...");
-  DSPrint(2,0,0,tmpStr);
+  DSPrint(0,0,0,tmpStr);
 
   FILE *handle = fopen(szLoadFile, "wb+");
   if (handle != NULL)
@@ -68,13 +78,13 @@ void MicroSaveState()
     // Write Last Directory Path / Tape File
     if (retVal) retVal = fwrite(&last_path, sizeof(last_path), 1, handle);
     if (retVal) retVal = fwrite(&last_file, sizeof(last_file), 1, handle);
-    
+
     // Write Motorola 6803 CPU
     if (retVal) retVal = fwrite(&cpu, sizeof(cpu), 1, handle);
 
     // Write VDG vars
     if (retVal) retVal = fwrite(&current_vdg_mode,      sizeof(current_vdg_mode),       1, handle);
-    
+
     // Some Cassette stuff
     if (retVal) retVal = fwrite(&tape_pos,              sizeof(tape_pos),               1, handle);
     if (retVal) retVal = fwrite(&tape_motor,            sizeof(tape_motor),             1, handle);
@@ -85,40 +95,40 @@ void MicroSaveState()
     if (retVal) retVal = fwrite(&bit_timing_threshold,  sizeof(bit_timing_threshold),   1, handle);
     if (retVal) retVal = fwrite(&bit_timing_count,      sizeof(bit_timing_count),       1, handle);
     if (retVal) retVal = fwrite(&read_cassette_counter, sizeof(read_cassette_counter),  1, handle);
-    
-    // And some MicroDS handling memory
-    if (retVal) retVal = fwrite(&micro_line,              sizeof(micro_line),               1, handle);
-    if (retVal) retVal = fwrite(&last_file_size,          sizeof(last_file_size),           1, handle);
-    if (retVal) retVal = fwrite(&emuFps,                  sizeof(emuFps),                   1, handle);
-    if (retVal) retVal = fwrite(&emuActFrames,            sizeof(emuActFrames),             1, handle);
-    if (retVal) retVal = fwrite(&timingFrames,            sizeof(timingFrames),             1, handle);
-    if (retVal) retVal = fwrite(&counter_read_latch,      sizeof(counter_read_latch),       1, handle);
-    if (retVal) retVal = fwrite(&mcx_ram_bank0,           sizeof(mcx_ram_bank0),            1, handle);
-    if (retVal) retVal = fwrite(&mcx_ram_bank1,           sizeof(mcx_ram_bank1),            1, handle);
-    if (retVal) retVal = fwrite(&mcx_rom_bank,            sizeof(mcx_rom_bank),             1, handle);
 
-    // And some spare bytes we can eat into as needed without bumping the SAVE version
-    if (retVal) retVal = fwrite(spare,                    16,                               1, handle);    
-    
+    // And some MicroDS handling memory
+    if (retVal) retVal = fwrite(&micro_line,              sizeof(micro_line),           1, handle);
+    if (retVal) retVal = fwrite(&last_file_size,          sizeof(last_file_size),       1, handle);
+    if (retVal) retVal = fwrite(&emuFps,                  sizeof(emuFps),               1, handle);
+    if (retVal) retVal = fwrite(&emuActFrames,            sizeof(emuActFrames),         1, handle);
+    if (retVal) retVal = fwrite(&timingFrames,            sizeof(timingFrames),         1, handle);
+    if (retVal) retVal = fwrite(&counter_read_latch,      sizeof(counter_read_latch),   1, handle);
+    if (retVal) retVal = fwrite(&mcx_ram_bank0,           sizeof(mcx_ram_bank0),        1, handle);
+    if (retVal) retVal = fwrite(&mcx_ram_bank1,           sizeof(mcx_ram_bank1),        1, handle);
+    if (retVal) retVal = fwrite(&mcx_rom_bank,            sizeof(mcx_rom_bank),         1, handle);
+                                                                                        
+    // And some spare bytes we can eat into as needed without bumping the SAVE version  
+    if (retVal) retVal = fwrite(spare,                    16,                           1, handle);
+
     // -----------------------------------------------------------------------
     // Compress the 64K RAM data using 'high' compression ratio... it's
     // still quite fast for such small memory buffers and gets us under 32K
     // -----------------------------------------------------------------------
-    int max_len = lzav_compress_bound_hi( 0x9000 );
-    int comp_len = lzav_compress_hi( Memory, CompressBuffer, 0x9000, max_len );
+    int max_len = lzav_compress_bound_hi( 0xc000 );
+    int comp_len = lzav_compress_hi( Memory, CompressBuffer, 0xc000, max_len );
 
     if (retVal) retVal = fwrite(&comp_len,          sizeof(comp_len), 1, handle);
     if (retVal) retVal = fwrite(&CompressBuffer,    comp_len,         1, handle);
 
     strcpy(tmpStr, (retVal ? "OK ":"ERR"));
-    DSPrint(11,0,0,tmpStr);
+    DSPrint(9,0,0,tmpStr);
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;
-    DSPrint(2,0,0,"             ");
+    DSPrint(0,0,0,"             ");
   }
   else
   {
       strcpy(tmpStr,"Error opening SAV file ...");
-      DSPrint(2,0,0,tmpStr);
+      DSPrint(0,0,0,tmpStr);
   }
   fclose(handle);
 }
@@ -141,17 +151,27 @@ void MicroLoadState()
   sprintf(szLoadFile,"sav/%s", initial_file);
 
   int len = strlen(szLoadFile);
-  szLoadFile[len-3] = 's';
-  szLoadFile[len-2] = 'a';
-  szLoadFile[len-1] = 'v';
-  
+  if (szLoadFile[len-3] == '.') // k7 file most likely
+  {
+      szLoadFile[len-2] = 's';
+      szLoadFile[len-1] = 'a';
+      szLoadFile[len-0] = 'v';
+      szLoadFile[len+1] = 0;
+  }
+  else
+  {
+      szLoadFile[len-3] = 's';
+      szLoadFile[len-2] = 'a';
+      szLoadFile[len-1] = 'v';
+  }
+
   memset(spare, 0x00, sizeof(spare));
 
   FILE *handle = fopen(szLoadFile, "rb");
   if (handle != NULL)
   {
      strcpy(tmpStr,"LOADING...");
-     DSPrint(2,0,0,tmpStr);
+     DSPrint(0,0,0,tmpStr);
 
     // Read Version
     u16 save_ver = 0xBEEF;
@@ -162,14 +182,14 @@ void MicroLoadState()
         // Restore Last Directory Path / Tape File
         if (retVal) retVal = fread(&last_path, sizeof(last_path), 1, handle);
         if (retVal) retVal = fread(&last_file, sizeof(last_file), 1, handle);
-        
+
         // ---------------------------------------------------------------
         // If we saved a last path/file, we load it back up if possible....
         // ---------------------------------------------------------------
         if (strlen(last_path) > 1)
         {
             chdir(last_path);
-            
+
             if (strlen(last_file) > 1)
             {
                 ReadFileCarefully(last_file, TapeBuffer, sizeof(TapeBuffer), 0);
@@ -181,7 +201,7 @@ void MicroLoadState()
 
         // Restore VDG vars
         if (retVal) retVal = fread(&current_vdg_mode,      sizeof(current_vdg_mode),       1, handle);
-        
+
         // Restore Cassette stuff
         if (retVal) retVal = fread(&tape_pos,              sizeof(tape_pos),               1, handle);
         if (retVal) retVal = fread(&tape_motor,            sizeof(tape_motor),             1, handle);
@@ -192,20 +212,20 @@ void MicroLoadState()
         if (retVal) retVal = fread(&bit_timing_threshold,  sizeof(bit_timing_threshold),   1, handle);
         if (retVal) retVal = fread(&bit_timing_count,      sizeof(bit_timing_count),       1, handle);
         if (retVal) retVal = fread(&read_cassette_counter, sizeof(read_cassette_counter),  1, handle);
-        
+
         // Restore some MicroDS handling memory
-        if (retVal) retVal = fread(&micro_line,              sizeof(micro_line),               1, handle);
-        if (retVal) retVal = fread(&last_file_size,          sizeof(last_file_size),           1, handle);
-        if (retVal) retVal = fread(&emuFps,                  sizeof(emuFps),                   1, handle);
-        if (retVal) retVal = fread(&emuActFrames,            sizeof(emuActFrames),             1, handle);
-        if (retVal) retVal = fread(&timingFrames,            sizeof(timingFrames),             1, handle);
-        if (retVal) retVal = fread(&counter_read_latch,      sizeof(counter_read_latch),       1, handle);
-        if (retVal) retVal = fread(&mcx_ram_bank0,           sizeof(mcx_ram_bank0),            1, handle);
-        if (retVal) retVal = fread(&mcx_ram_bank1,           sizeof(mcx_ram_bank1),            1, handle);
-        if (retVal) retVal = fread(&mcx_rom_bank,            sizeof(mcx_rom_bank),             1, handle);
-        
-        // And some spare bytes we can eat into as needed without bumping the SAVE version
-        if (retVal) retVal = fread(spare,                    16,                               1, handle);    
+        if (retVal) retVal = fread(&micro_line,              sizeof(micro_line),           1, handle);
+        if (retVal) retVal = fread(&last_file_size,          sizeof(last_file_size),       1, handle);
+        if (retVal) retVal = fread(&emuFps,                  sizeof(emuFps),               1, handle);
+        if (retVal) retVal = fread(&emuActFrames,            sizeof(emuActFrames),         1, handle);
+        if (retVal) retVal = fread(&timingFrames,            sizeof(timingFrames),         1, handle);
+        if (retVal) retVal = fread(&counter_read_latch,      sizeof(counter_read_latch),   1, handle);
+        if (retVal) retVal = fread(&mcx_ram_bank0,           sizeof(mcx_ram_bank0),        1, handle);
+        if (retVal) retVal = fread(&mcx_ram_bank1,           sizeof(mcx_ram_bank1),        1, handle);
+        if (retVal) retVal = fread(&mcx_rom_bank,            sizeof(mcx_rom_bank),         1, handle);
+                                                                                           
+        // And some spare bytes we can eat into as needed without bumping the SAVE version 
+        if (retVal) retVal = fread(spare,                    16,                           1, handle);
 
         // Restore Main RAM memory
         int comp_len = 0;
@@ -216,20 +236,20 @@ void MicroLoadState()
         // Decompress the previously compressed RAM and put it back into the
         // right memory location... this is quite fast all things considered.
         // ------------------------------------------------------------------
-        (void)lzav_decompress( CompressBuffer, Memory, comp_len, 0x9000 );
-        
+        (void)lzav_decompress( CompressBuffer, Memory, comp_len, 0xC000 ); // Everything up to start of BASIC ROM
+
         strcpy(tmpStr, (retVal ? "OK ":"ERR"));
-        DSPrint(11,0,0,tmpStr);
+        DSPrint(9,0,0,tmpStr);
 
         WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;
-        DSPrint(2,0,0,"             ");
+        DSPrint(0,0,0,"             ");
       }
   }
   else
   {
-      DSPrint(2,0,0,"NO SAVED GAME");
+      DSPrint(0,0,0,"NO SAVED GAME");
       WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;
-      DSPrint(2,0,0,"             ");
+      DSPrint(0,0,0,"             ");
   }
 
     fclose(handle);

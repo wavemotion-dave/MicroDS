@@ -17,6 +17,7 @@ Features :
 * 4K Internal RAM + 16K External Expansion RAM for 20K total (+128 byte CPU RAM).
 * Optional memory expansion to 32K in machine configuration.
 * Optional emulation of the MCX-128 peripheral with MCXBASIC 2.1
+* Optional Alice 4K emulation with RAM expansion and loading of .k7 files.
 * Cassette (.C10) support for loading games and programs.
 * Save/Load Game State (one slot).
 * CPU Speed overclock up to 130% to speed up some of the older BASIC programs.
@@ -66,6 +67,8 @@ You will need the MICROBASIC ROM which must be named either MC10.BIN or MC10.ROM
 different naming conventions) and it must be placed in the same directory as the emulator or else /roms/bios
 
 Optionally you can include MCX.BIN or MCX.ROM (CRC32 of 11202e4b) for MCX-128 emulation.
+
+Optionally you can include ALICE4K.ROM (CRC32 of f876abe9) for Alice 4K emulation.
 
 Loading Games :
 -----------------------

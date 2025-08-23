@@ -41,9 +41,11 @@
 #define MACHINE_20K                 0
 #define MACHINE_32K                 1
 #define MACHINE_MCX                 2
+#define MACHINE_ALICE               3
 
 extern unsigned char MC10BASIC[0x2000];
 extern unsigned char MCXBASIC[0x4000];
+extern unsigned char ALICE4K[0x2000];
 
 extern char last_path[MAX_FILENAME_LEN];
 extern char last_file[MAX_FILENAME_LEN];

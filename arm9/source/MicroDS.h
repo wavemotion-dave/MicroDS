@@ -26,6 +26,8 @@ extern u32 DX, DY;
 #define MENU_CHOICE_LOAD_GAME   0x04
 #define MENU_CHOICE_DEFINE_KEYS 0x05
 #define MENU_CHOICE_GAME_OPTION 0x06
+#define MENU_CHOICE_TAPE_REWIND 0x07
+#define MENU_CHOICE_TAPE_STOP   0x08
 #define MENU_CHOICE_MENU        0xFF        // Special brings up a mini-menu of choices
 
 #define MAX_KEY_OPTIONS     49
@@ -51,6 +53,7 @@ extern u32 last_file_size;
 extern u8 bottom_screen;
 extern u8 shift_key, ctrl_key;
 extern u8 bMCX_found;
+extern u8 bALICE_found;
 
 extern void BottomScreenOptions(void);
 extern void BottomScreenKeyboard(void);
