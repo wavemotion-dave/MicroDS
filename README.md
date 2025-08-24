@@ -131,9 +131,10 @@ The more useful menu item here is (1) MCX BASIC which provides the extended BASI
 it only has partial RAM/ROM banking. It has enough to manage the video memory on a separate RAM page and allows the MCX BASIC - LARGE model to manage it... but if a program were to try and utilize more of the banked memory, this
 emulation will not be sufficient. This may be improved someday - but for now, it's enough to get a number of known MCX BASIC games working on the emulator.
 
-Known Issues:
+Known Issues and Limitations:
 -----------------------
 * Frames are drawn in their entirety on the VSYNC meaning that any demos that utilize split-screen techniques will not run correctly. Virtually nothing tries to actually do this to the best of my knowledge.
+* Cassette (.C10 and .K7) files are read-only. No write-back is supported.
 
 Compile Instructions :
 -----------------------
@@ -163,6 +164,7 @@ Versions :
 V1.0: 24-Aug-2024 by wavemotion-dave
 * Added Alice 4K emulation mode.
 * Added tape STOP and REWIND options.
+* Fixed Save/Load state for > 20K configurations.
 * Cleanup across the board for the 1.0 release.
 
 V0.9: 21-Aug-2024 by wavemotion-dave
