@@ -34,14 +34,14 @@ FIMicro     gpFic[MAX_FILES];
 char        szName[256];
 char        szName2[40];
 char        szFile[256];
-u32         file_size = 0;
 char        strBuf[40];
 
 struct Config_t         AllConfigs[MAX_CONFIGS];
 struct Config_t         myConfig __attribute((aligned(4))) __attribute__((section(".dtcm")));
 struct GlobalConfig_t   myGlobalConfig;
 
-u32 file_crc __attribute__((section(".dtcm")))  = 0x00000000;  // Our global file CRC32 to uniquiely identify this game
+u32 file_crc    __attribute__((section(".dtcm")))  = 0x00000000;  // Our global file CRC32 to uniquiely identify this game
+u32 file_size   __attribute__((section(".dtcm")))  = 0;           // Our global file size so we know how much tape data is in the buffer
 
 u8 option_table=0;
 
@@ -630,10 +630,20 @@ void SaveConfig(bool bShow)
 
 void MapWAZS(void)
 {
-    myConfig.keymap[0]   = KBD_W;    // NDS D-Pad UP    mapped to W
-    myConfig.keymap[1]   = KBD_A;    // NDS D-Pad LEFT  mapped to A
-    myConfig.keymap[2]   = KBD_Z;    // NDS D-Pad DOWN  mapped to Z
-    myConfig.keymap[3]   = KBD_S;    // NDS D-Pad RIGHT mapped to S
+    if (myConfig.machine == MACHINE_ALICE)
+    {
+        myConfig.keymap[0]   = KBD_Z;    // NDS D-Pad UP    mapped to Z
+        myConfig.keymap[1]   = KBD_Q;    // NDS D-Pad LEFT  mapped to Q
+        myConfig.keymap[2]   = KBD_W;    // NDS D-Pad DOWN  mapped to W
+        myConfig.keymap[3]   = KBD_S;    // NDS D-Pad RIGHT mapped to S
+    }
+    else
+    {
+        myConfig.keymap[0]   = KBD_W;    // NDS D-Pad UP    mapped to W
+        myConfig.keymap[1]   = KBD_A;    // NDS D-Pad LEFT  mapped to A
+        myConfig.keymap[2]   = KBD_Z;    // NDS D-Pad DOWN  mapped to Z
+        myConfig.keymap[3]   = KBD_S;    // NDS D-Pad RIGHT mapped to S
+    }
     myConfig.keymap[4]   = KBD_SPACE;// NDS A Button mapped to SPACE
     myConfig.keymap[5]   = KBD_ENTER;// NDS B Button mapped to ENTER
     myConfig.keymap[6]   = KBD_SPACE;// NDS X Button mapped to SPACE
@@ -786,18 +796,18 @@ const struct options_t Option_Table[2][20] =
 {
     // Game Specific Configuration
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE 4K"},&myConfig.machine,           4},
-        {"AUTO LOAD",      {"NO", "CLOAD [RUN]", "CLOADM [EXEC]"},                     &myConfig.autoLoad,          3},
-        {"GAME SPEED",     {"100%", "110%", "120%", "130%", "90%", "80%"},             &myConfig.gameSpeed,         6},
-        {"NDS D-PAD",      {"NORMAL", "SLIDE-N-GLIDE", "DIAGONALS"},                   &myConfig.dpad,              3},
-        {NULL,             {"",      ""},                                              NULL,                        1},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE (20K)"},  &myConfig.machine,           4},
+        {"AUTO LOAD",      {"NO", "CLOAD [RUN]", "CLOADM [EXEC]"},                          &myConfig.autoLoad,          3},
+        {"GAME SPEED",     {"100%", "110%", "120%", "130%", "90%", "80%"},                  &myConfig.gameSpeed,         6},
+        {"NDS D-PAD",      {"NORMAL", "SLIDE-N-GLIDE", "DIAGONALS"},                        &myConfig.dpad,              3},
+        {NULL,             {"",      ""},                                                   NULL,                        1},
     },
     // Global Options
     {
-        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE 4K"},&myGlobalConfig.defMachine,  4},
-        {"FPS",            {"OFF", "ON", "ON FULLSPEED"},                              &myGlobalConfig.showFPS,     3},
-        {"DEBUGGER",       {"OFF", "ON"},                                              &myGlobalConfig.debugger,    2},
-        {NULL,             {"",      ""},                                              NULL,                        1},
+        {"MACHINE TYPE",   {"MC10 (20K RAM)", "MC10 (32K RAM)", "MCX-128", "ALICE (20K)"},  &myGlobalConfig.defMachine,  4},
+        {"FPS",            {"OFF", "ON", "ON FULLSPEED"},                                   &myGlobalConfig.showFPS,     3},
+        {"DEBUGGER",       {"OFF", "ON"},                                                   &myGlobalConfig.debugger,    2},
+        {NULL,             {"",      ""},                                                   NULL,                        1},
     }
 };
 
@@ -1431,6 +1441,7 @@ u8 BufferedKeysWriteIdx=0;
 u8 BufferedKeysReadIdx=0;
 void BufferKey(u8 key)
 {
+    // The ALICE 4K machine swaps a few keys logically for the AZERTY keyboard
     if (myConfig.machine == MACHINE_ALICE)
     {
              if (key == KBD_A)     key = KBD_Q;
@@ -1533,12 +1544,12 @@ u8 MC10Init(char *szGame)
 }
 
 /*********************************************************************************
- * Run the emul
+ * Run the emulator - reset the micro and put up the virtual keyboard.
  ********************************************************************************/
 void RunMicroComputer(void)
 {
-  micro_reset();                        // Ensure the MC-10 Emulation is ready
-  BottomScreenKeyboard();               // Show the game-related screen with keypad / keyboard
+  micro_reset();                // Ensure the MC-10 Emulation is ready
+  BottomScreenKeyboard();       // Show the game-related screen with keypad / keyboard
 }
 
 // ------------------------------------------------------------------------------------
@@ -1602,14 +1613,14 @@ void getfile_crc(const char *filename)
     DSPrint(11,13,6, "LOADING...");
     WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;WAITVBL;
 
-    file_crc = getFileCrc(filename);        // The CRC is used as a unique ID to save out High Scores and Configuration...
+    file_crc = getFileCrc(filename);        // The CRC is used as a unique ID to save out Configuration...
 
     DSPrint(11,13,6, "          ");
 }
 
 
 /** loadgame() ******************************************************************/
-/* Open a rom file from file system and load it into the TapeBuffer[] buffer    */
+/* Open a tape file from file system and load it into the TapeBuffer[] buffer   */
 /********************************************************************************/
 u8 loadgame(const char *filename)
 {
@@ -1625,12 +1636,15 @@ u8 loadgame(const char *filename)
     romSize = stbuf.st_size;
     fclose(handle); // We only need to close the file - the game ROM is now sitting in TapeBuffer[] from the getFileCrc() handler
 
-    last_file_size = (u32)romSize;
+    file_size = (u32)romSize;
   }
 
   return bOK;
 }
 
+// --------------------------------------------------------------
+// Only used to roughly time the fade-out of the intro logo...
+// --------------------------------------------------------------
 void vblankIntro()
 {
   vusCptVBL++;
@@ -1661,7 +1675,7 @@ void intro_logo(void)
 
   mmEffect(SFX_MUS_INTRO);
 
-  // Show splash
+  // Show splash screen on top and bottom screens
   decompress(splashTiles, bgGetGfxPtr(bg1), LZ77Vram);
   decompress(splashMap, (void*) bgGetMapPtr(bg1), LZ77Vram);
   dmaCopy((void *) splashPal,(u16*) BG_PALETTE,256*2);

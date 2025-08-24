@@ -950,6 +950,18 @@ ITCM_CODE void MicroDS_main(void)
                       {
                           // This is a keyboard maping... handle that here... just set the appopriate kbd_key
                           kbd_key = myConfig.keymap[i];
+                          
+                          // For the ALICE machine, there are a couple of key swaps needed...
+                          if (myConfig.machine == MACHINE_ALICE)
+                          {
+                                  if (kbd_key == KBD_A)     kbd_key = KBD_Q;
+                             else if (kbd_key == KBD_Q)     kbd_key = KBD_A;
+                             else if (kbd_key == KBD_Z)     kbd_key = KBD_W;
+                             else if (kbd_key == KBD_W)     kbd_key = KBD_Z;
+                             else if (kbd_key == KBD_SEMI)  kbd_key = KBD_M;
+                             else if (kbd_key == KBD_M)     kbd_key = KBD_SEMI;
+                          }
+                          
                           kbd_keys[kbd_keys_pressed++] = kbd_key;
                       }
                   }
@@ -1168,6 +1180,10 @@ void LoadBIOSFiles(void)
     if (!size) size = ReadFileCarefully("alice.rom",               ALICE4K, 0x2000, 0);
     if (!size) size = ReadFileCarefully("/roms/bios/alice.rom",    ALICE4K, 0x2000, 0);
     if (!size) size = ReadFileCarefully("/data/bios/alice.rom",    ALICE4K, 0x2000, 0);
+
+    if (!size) size = ReadFileCarefully("alice.bin",               ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/roms/bios/alice.bin",    ALICE4K, 0x2000, 0);
+    if (!size) size = ReadFileCarefully("/data/bios/alice.bin",    ALICE4K, 0x2000, 0);
 
     if (size) bALICE_found = true;
 }

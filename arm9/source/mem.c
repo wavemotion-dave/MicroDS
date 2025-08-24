@@ -65,7 +65,7 @@ void mem_init(void)
     // but we allow an expanded 32K version that maps RAM up
     // to the last 256 byte page of memory before the ROM starts.
     // ----------------------------------------------------------
-    io_start = (myConfig.machine ? 0xbf00:0x9000);
+    io_start = ((myConfig.machine == MACHINE_32K || myConfig.machine == MACHINE_MCX) ? 0xbf00:0x9000);
 
     mcx_ram_bank0 = 0x00;
     mcx_ram_bank1 = 0x00;

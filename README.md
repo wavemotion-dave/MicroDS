@@ -17,7 +17,7 @@ Features :
 * 4K Internal RAM + 16K External Expansion RAM for 20K total (+128 byte CPU RAM).
 * Optional memory expansion to 32K in machine configuration.
 * Optional emulation of the MCX-128 peripheral with MCXBASIC 2.1
-* Optional Alice 4K emulation with RAM expansion and loading of .k7 files.
+* Optional Alice 4K emulation with RAM expansion (total of 20K RAM) and loading of .k7 files.
 * Cassette (.C10) support for loading games and programs.
 * Save/Load Game State (one slot).
 * CPU Speed overclock up to 130% to speed up some of the older BASIC programs.
@@ -68,11 +68,12 @@ different naming conventions) and it must be placed in the same directory as the
 
 Optionally you can include MCX.BIN or MCX.ROM (CRC32 of 11202e4b) for MCX-128 emulation.
 
-Optionally you can include ALICE4K.ROM (CRC32 of f876abe9) for Alice 4K emulation.
+Optionally you can include ALICE4K.ROM (CRC32 of f876abe9) for Alice 4K emulation. This will allow you to load .k7 tape files.
 
 Loading Games :
 -----------------------
-This MC-10 emulator supports .C10 cassette files. These are the most popular format to find on the web for the MC-10 machine.
+This MC-10 emulator supports .C10 cassette files and .k7 tape files (if ALICE 4K emulation enabled). 
+These are the most popular format to find on the web for the MC-10 or Alice 4K machines.
 
 ![image](./png/mainmenu.png)
 
@@ -104,8 +105,8 @@ Each game can individually configure any of the 10 DS buttons (D-PAD, ABXY, L/R)
 and Button A to replicate the Cursors (AWSX) but you can configure as you like. Pressing the X button on this screen will toggle between some preset defaults for common key
 maps - such as WASD.
 
-The START key is special - it will issue the CLOAD/CLOADM command to save typing.
-The SELECT key is special - it issues the RUN command to MICROBASIC to save typing.
+The START key is special - it will issue the *CLOAD/CLOADM* command to save typing.
+The SELECT key is special - it issues the *RUN* command to MICROBASIC to save typing.
 
 Keyboards :
 -----------------------
@@ -159,6 +160,11 @@ And then move the soundbank.h file to the arm9/sources directory
 
 Versions :
 -----------------------
+V1.0: 24-Aug-2024 by wavemotion-dave
+* Added Alice 4K emulation mode.
+* Added tape STOP and REWIND options.
+* Cleanup across the board for the 1.0 release.
+
 V0.9: 21-Aug-2024 by wavemotion-dave
 * Implemented all undocumented 6803 CPU opcodes.
 * Added partial MCX support for MCXBASIC 2.1

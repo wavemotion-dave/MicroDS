@@ -43,9 +43,9 @@ uint8_t tape_guess_type(void)
 {
     int printable_chars = 0;
 
-    u32 compare_size = last_file_size;
+    u32 compare_size = file_size;
     
-    for (int i=0; i < last_file_size; i++)
+    for (int i=0; i < file_size; i++)
     {
         char c = toupper(TapeBuffer[i]);
         if (c != 0x55)
@@ -73,7 +73,7 @@ uint8_t tape_guess_type(void)
 // -----------------------------------------------------------------
 inline uint8_t tape_file_read(void)
 {
-    if (tape_pos > last_file_size)
+    if (tape_pos > file_size)
     {
         cas_eof = 1;
         tape_motor = 0;
@@ -82,7 +82,7 @@ inline uint8_t tape_file_read(void)
     }
 
     // If we are nearing the end... go back to normal speed
-    if ((tape_pos + 512) >= last_file_size)
+    if ((tape_pos + 512) >= file_size)
     {
         tape_motor = 1;
         tape_speedup = 0;

@@ -51,7 +51,6 @@ extern char last_path[MAX_FILENAME_LEN];
 extern char last_file[MAX_FILENAME_LEN];
 
 extern u32 micro_line;
-extern u32 last_file_size;
 extern u32 file_size;
 extern u32 tape_pos;
 extern u8  tape_motor;

@@ -98,7 +98,7 @@ void MicroSaveState()
 
     // And some MicroDS handling memory
     if (retVal) retVal = fwrite(&micro_line,              sizeof(micro_line),           1, handle);
-    if (retVal) retVal = fwrite(&last_file_size,          sizeof(last_file_size),       1, handle);
+    if (retVal) retVal = fwrite(&file_size,               sizeof(file_size),            1, handle);
     if (retVal) retVal = fwrite(&emuFps,                  sizeof(emuFps),               1, handle);
     if (retVal) retVal = fwrite(&emuActFrames,            sizeof(emuActFrames),         1, handle);
     if (retVal) retVal = fwrite(&timingFrames,            sizeof(timingFrames),         1, handle);
@@ -215,7 +215,7 @@ void MicroLoadState()
 
         // Restore some MicroDS handling memory
         if (retVal) retVal = fread(&micro_line,              sizeof(micro_line),           1, handle);
-        if (retVal) retVal = fread(&last_file_size,          sizeof(last_file_size),       1, handle);
+        if (retVal) retVal = fread(&file_size     ,          sizeof(file_size),            1, handle);
         if (retVal) retVal = fread(&emuFps,                  sizeof(emuFps),               1, handle);
         if (retVal) retVal = fread(&emuActFrames,            sizeof(emuActFrames),         1, handle);
         if (retVal) retVal = fread(&timingFrames,            sizeof(timingFrames),         1, handle);

@@ -28,8 +28,7 @@
 
 #define NTSC_SCANLINES      262
 
-u32 micro_line              __attribute__((section(".dtcm"))) = 0;
-u32 last_file_size          __attribute__((section(".dtcm"))) = 0;
+u32 micro_line  __attribute__((section(".dtcm"))) = 0;
 
 // ------------------------------------------------------------------------
 // Reset the emulation. Load the MICROBASIC into the memory map and reset
@@ -56,8 +55,8 @@ void micro_reset(void)
     }
     else if ((myConfig.machine == MACHINE_ALICE) && bALICE_found)
     {
-        mem_load_rom(0xc000, ALICE4K, sizeof(ALICE4K)); // Mirror of 8K BASIC
-        mem_load_rom(0xe000, ALICE4K, sizeof(ALICE4K)); // ROM normally runs here
+        mem_load_rom(0xc000, ALICE4K, sizeof(ALICE4K));     // Mirror of 8K BASIC
+        mem_load_rom(0xe000, ALICE4K, sizeof(ALICE4K));     // ROM normally runs here
     }
     else
     {
